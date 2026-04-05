@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhtaLife — Care Plan Templates</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  :root { --aegean-dark: #5A8282; --aegean: #6F9797; --cream: #FAFAF8; --white: #FFFFFF; --text: #2C3E3E; --text-mid: #4A6060; --text-light: #7A9494; --border: #D4DDD8; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+  .container { max-width: 480px; width: 100%; text-align: center; }
+  .logo-mark { width: 70px; height: 70px; margin: 0 auto 1rem; background: var(--aegean-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .logo-mark svg { width: 40px; height: 40px; }
+  .brand { font-family: 'Lora', serif; font-size: 2rem; font-weight: 700; color: var(--aegean-dark); letter-spacing: 0.5px; }
+  .tagline { font-size: 0.85rem; color: var(--text-light); margin-top: 0.25rem; }
+  .cards { margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .card-link {
+    display: block; padding: 1.25rem 1.5rem;
+    background: var(--white); border: 1px solid var(--border); border-radius: 8px;
+    text-decoration: none; color: var(--text); text-align: left;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .card-link:hover { border-color: var(--aegean); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .card-link .title { font-family: 'Lora', serif; font-size: 0.95rem; font-weight: 600; color: var(--aegean-dark); }
+  .card-link .desc { font-size: 0.78rem; color: var(--text-mid); margin-top: 0.2rem; }
+  .privacy { margin-top: 2rem; padding: 1rem 1.25rem; background: rgba(94,142,94,0.06); border: 1px solid rgba(94,142,94,0.15); border-radius: 6px; font-size: 0.72rem; color: #4A7A4A; line-height: 1.5; text-align: left; }
+  .privacy strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo-mark">
+    <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 38 C50 30, 42 18, 36 16 C28 13, 22 18, 22 26 C22 34, 30 40, 50 44"/>
+      <path d="M50 38 C50 30, 58 18, 64 16 C72 13, 78 18, 78 26 C78 34, 70 40, 50 44"/>
+      <path d="M56 46 C62 42, 74 38, 80 40 C87 43, 88 50, 84 56 C79 63, 68 62, 54 52"/>
+      <path d="M56 46 C64 50, 78 52, 82 56 C88 62, 85 70, 78 72 C71 74, 62 66, 54 52"/>
+      <path d="M44 46 C38 42, 26 38, 20 40 C13 43, 12 50, 16 56 C21 63, 32 62, 46 52"/>
+      <path d="M44 46 C36 50, 22 52, 18 56 C12 62, 15 70, 22 72 C29 74, 38 66, 46 52"/>
+      <line x1="44" y1="38" x2="40" y2="34"/>
+      <line x1="56" y1="38" x2="60" y2="34"/>
+      <circle cx="50" cy="44" r="2" fill="white" stroke="none"/>
+      <line x1="50" y1="44" x2="50" y2="130"/>
+      <path d="M50 56 C42 60, 40 68, 50 72" fill="none"/>
+      <path d="M50 72 C58 76, 60 84, 50 88" fill="none"/>
+      <path d="M50 88 C42 92, 40 100, 50 104" fill="none"/>
+      <path d="M50 104 C56 107, 58 112, 54 118 C52 122, 48 124, 46 128" fill="none"/>
+    </svg>
+  </div>
+  <div class="brand">WhtaLife</div>
+  <div class="tagline">Compassionate Care, Guided by You</div>
+
+  <div class="cards">
+    <a class="card-link" href="templates/clinical-template.html">
+      <div class="title">Clinical Care Plan Builder</div>
+      <div class="desc">For nursing staff. Full NANDA diagnoses, goals, interventions, and evaluations. Add, edit, and organize diagnoses by priority.</div>
+    </a>
+    <a class="card-link" href="templates/client-template.html">
+      <div class="title">Client Care Plan Builder</div>
+      <div class="desc">For clients and families. Plain-language care goals with interactive checklists, notes, and progress tracking.</div>
+    </a>
+  </div>
+
+  <div class="privacy">
+    <strong>Privacy Notice:</strong> All information entered into these templates is stored locally in your browser only. No data is transmitted to any server. No patient information is stored online. Export your completed care plan as a PDF for your records.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhtaLife — Client Care Plan Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --aegean: #6F9797;
+    --aegean-dark: #5A8282;
+    --salisbury: #C5C9A8;
+    --spring: #C4CEBC;
+    --cream: #FAFAF8;
+    --white: #FFFFFF;
+    --text: #2C3E3E;
+    --text-mid: #4A6060;
+    --text-light: #7A9494;
+    --border: #DDE5E0;
+    --success: #5E8E5E;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 2rem 1.5rem 1.75rem;
+    text-align: center;
+  }
+  .logo-mark {
+    width: 52px; height: 52px;
+    margin: 0 auto 0.75rem;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 30px; height: 30px; }
+  .brand { font-family: 'Lora', serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.5px; }
+  .tagline { font-size: 0.8rem; font-weight: 300; opacity: 0.8; margin-top: 0.15rem; }
+  .header h1 { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: 600; margin-top: 1rem; }
+  .header p { font-size: 0.85rem; opacity: 0.85; max-width: 480px; margin: 0.4rem auto 0; font-weight: 300; }
+
+  .client-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.25rem;
+    max-width: 720px; margin: 0 auto;
+  }
+  .client-bar .name { font-family: 'Lora', serif; font-weight: 600; font-size: 0.9rem; color: var(--aegean-dark); }
+  .client-bar .date { font-size: 0.75rem; color: var(--text-light); }
+
+  /* Editable fields */
+  [contenteditable] {
+    outline: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.2s, background 0.2s;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  [contenteditable]:hover { border-bottom-color: var(--aegean); }
+  [contenteditable]:focus { border-bottom-color: var(--aegean-dark); background: rgba(111,151,151,0.06); }
+
+  .cards { padding: 0.75rem 1rem 5rem; max-width: 720px; margin: 0 auto; }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 0.6rem;
+    position: relative;
+  }
+  .card:hover { border-color: var(--aegean); }
+
+  .card-hd {
+    padding: 0.85rem 1rem;
+    display: flex; align-items: center; gap: 0.65rem;
+    cursor: pointer; user-select: none;
+  }
+
+  .ic {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .ic svg { width: 18px; height: 18px; stroke-width: 1.8; }
+  .ic.heart { background: #EDE8E8; }
+  .ic.heart svg { stroke: #8E6060; }
+  .ic.lungs { background: #E5ECF0; }
+  .ic.lungs svg { stroke: #5A7A8E; }
+  .ic.brain { background: #EAE6EE; }
+  .ic.brain svg { stroke: #7A6090; }
+  .ic.blood { background: #EDE9E4; }
+  .ic.blood svg { stroke: #8E7A56; }
+  .ic.kidney { background: #E4EDE8; }
+  .ic.kidney svg { stroke: #56806A; }
+  .ic.bone { background: #EDEBE4; }
+  .ic.bone svg { stroke: #80764A; }
+  .ic.shield { background: #E4EDEC; }
+  .ic.shield svg { stroke: #508080; }
+  .ic.sleep { background: #E8E6ED; }
+  .ic.sleep svg { stroke: #6A6090; }
+  .ic.food { background: #ECEDE4; }
+  .ic.food svg { stroke: #6E8040; }
+  .ic.person { background: #E4EAED; }
+  .ic.person svg { stroke: #506878; }
+  .ic.wellbeing { background: #E8EDE8; }
+  .ic.wellbeing svg { stroke: #5E8060; }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-title { font-family: 'Lora', serif; font-size: 0.88rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .card-sub { font-size: 0.72rem; color: var(--text-light); margin-top: 0.05rem; }
+
+  .badge {
+    font-size: 0.6rem; font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    flex-shrink: 0;
+    cursor: pointer; user-select: none;
+  }
+  .badge.high { background: #F0E0E0; color: #8A4A4A; }
+  .badge.medium { background: #EDE8DA; color: #7A6A3A; }
+  .badge.monitor { background: #E0ECE0; color: #4A7A4A; }
+
+  .chev {
+    width: 16px; height: 16px; flex-shrink: 0; color: var(--text-light);
+    transition: transform 0.25s;
+  }
+  .card.open .chev { transform: rotate(180deg); }
+
+  .card-bd { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .card.open .card-bd { max-height: 3000px; }
+  .card-inner { padding: 0 1rem 1rem; }
+
+  .sec { margin-top: 0.85rem; }
+  .sec:first-child { margin-top: 0; }
+  .sec-lbl {
+    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--aegean-dark); margin-bottom: 0.4rem;
+  }
+
+  .context {
+    background: var(--cream);
+    border-left: 2px solid var(--salisbury);
+    padding: 0.6rem 0.85rem;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem; color: var(--text-mid); line-height: 1.55;
+    min-height: 2.5rem;
+  }
+
+  .goals { list-style: none; }
+  .goals li {
+    font-size: 0.82rem; color: var(--text-mid);
+    padding: 0.15rem 0; padding-left: 1rem;
+    position: relative;
+  }
+  .goals li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.55rem;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--aegean);
+  }
+
+  .action-items { list-style: none; }
+  .action-items li {
+    font-size: 0.82rem; color: var(--text-mid);
+    padding: 0.2rem 0 0.2rem 1rem;
+    position: relative;
+    line-height: 1.55;
+  }
+  .action-items li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.55rem;
+    width: 8px; height: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+  }
+
+  .eval {
+    background: rgba(94,142,94,0.06);
+    border: 1px solid rgba(94,142,94,0.15);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem; color: var(--success); line-height: 1.5;
+    min-height: 2rem;
+  }
+
+  /* Add / Remove buttons */
+  .add-item-btn {
+    background: none; border: 1px dashed var(--border);
+    color: var(--text-light); font-size: 0.72rem; font-family: 'Inter', sans-serif;
+    padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;
+    margin-top: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .add-item-btn:hover { border-color: var(--aegean); color: var(--aegean-dark); }
+
+  .add-card-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; padding: 0.85rem;
+    background: var(--white); border: 2px dashed var(--border);
+    border-radius: var(--radius); cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
+    color: var(--text-light); margin-bottom: 1rem;
+  }
+  .add-card-btn:hover { border-color: var(--aegean); color: var(--aegean-dark); }
+
+  .remove-btn {
+    position: absolute; top: 0.6rem; right: 0.6rem;
+    background: none; border: none;
+    color: var(--text-light); cursor: pointer;
+    width: 24px; height: 24px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; line-height: 1;
+    opacity: 0; transition: opacity 0.15s; z-index: 2;
+  }
+  .card:hover .remove-btn { opacity: 1; }
+  .remove-btn:hover { background: #F5EAEA; color: #8A4A4A; }
+
+  .remove-li {
+    display: none;
+    background: none; border: none;
+    color: var(--text-light); cursor: pointer;
+    font-size: 0.7rem; margin-left: 0.25rem;
+    padding: 0 0.2rem; border-radius: 2px;
+  }
+  li:hover .remove-li { display: inline; }
+  .remove-li:hover { color: #8A4A4A; }
+
+  /* Icon picker */
+  .icon-picker {
+    display: none;
+    position: absolute; top: 50px; left: 10px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 50;
+    flex-wrap: wrap; gap: 0.25rem; width: 220px;
+  }
+  .icon-picker.show { display: flex; }
+  .icon-picker button {
+    width: 32px; height: 32px; border-radius: 6px;
+    border: 1px solid var(--border-light, #eee); background: var(--cream);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+  }
+  .icon-picker button:hover { border-color: var(--aegean); background: rgba(111,151,151,0.1); }
+  .icon-picker button svg { width: 16px; height: 16px; stroke: var(--text-mid); stroke-width: 1.8; }
+
+  /* Category picker */
+  .cat-picker {
+    display: none;
+    position: absolute; top: 50px; left: 50px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 50; min-width: 140px;
+  }
+  .cat-picker.show { display: block; }
+  .cat-picker button {
+    display: block; width: 100%;
+    text-align: left; padding: 0.3rem 0.5rem;
+    border: none; background: none; cursor: pointer;
+    font-size: 0.72rem; font-family: 'Inter', sans-serif;
+    color: var(--text-mid); border-radius: 4px;
+  }
+  .cat-picker button:hover { background: var(--cream); color: var(--aegean-dark); }
+
+  /* Action bar */
+  .action-bar {
+    position: fixed; bottom: 1.25rem; right: 1.25rem;
+    display: flex; gap: 0.5rem; z-index: 100;
+  }
+  .action-btn {
+    background: var(--aegean-dark); color: white; border: none;
+    height: 38px; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    padding: 0 0.85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 500;
+  }
+  .action-btn:hover { background: var(--aegean); }
+  .action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .save-indicator {
+    position: fixed; top: 1rem; right: 1rem;
+    font-size: 0.7rem; color: #4A7A4A;
+    background: #E5EDE5;
+    padding: 0.3rem 0.7rem; border-radius: 4px;
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 100; pointer-events: none;
+  }
+  .save-indicator.show { opacity: 1; }
+
+  .hidden { display: none !important; }
+
+  @media print {
+    body { background: white; }
+    .card-bd { max-height: none !important; }
+    .action-bar, .add-card-btn, .add-item-btn, .remove-btn, .remove-li,
+    .save-indicator, .icon-picker, .cat-picker { display: none !important; }
+    .card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 0.5rem; }
+    .card-hd { cursor: default; }
+    .header { padding: 1.5rem 1rem; }
+    .header p, .tagline { display: none; }
+    .brand { font-size: 1.4rem; }
+    .header h1 { margin-top: 0.5rem; font-size: 1.1rem; }
+    .client-bar { border-bottom: 1px solid #ccc; }
+    .cards { padding-bottom: 0; }
+    [contenteditable] { border-bottom: none !important; }
+  }
+  @media (min-width: 700px) {
+    .header { padding: 2.5rem 2rem 2rem; }
+    .brand { font-size: 2rem; }
+    .header h1 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="save-indicator" id="saveIndicator">Saved</div>
+
+<div class="header">
+  <div class="logo-mark">
+    <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 38 C50 30, 42 18, 36 16 C28 13, 22 18, 22 26 C22 34, 30 40, 50 44"/>
+      <path d="M50 38 C50 30, 58 18, 64 16 C72 13, 78 18, 78 26 C78 34, 70 40, 50 44"/>
+      <path d="M56 46 C62 42, 74 38, 80 40 C87 43, 88 50, 84 56 C79 63, 68 62, 54 52"/>
+      <path d="M56 46 C64 50, 78 52, 82 56 C88 62, 85 70, 78 72 C71 74, 62 66, 54 52"/>
+      <path d="M44 46 C38 42, 26 38, 20 40 C13 43, 12 50, 16 56 C21 63, 32 62, 46 52"/>
+      <path d="M44 46 C36 50, 22 52, 18 56 C12 62, 15 70, 22 72 C29 74, 38 66, 46 52"/>
+      <line x1="44" y1="38" x2="40" y2="34"/>
+      <line x1="56" y1="38" x2="60" y2="34"/>
+      <circle cx="50" cy="44" r="2" fill="white" stroke="none"/>
+      <line x1="50" y1="44" x2="50" y2="130"/>
+      <path d="M50 56 C42 60, 40 68, 50 72" fill="none"/>
+      <path d="M50 72 C58 76, 60 84, 50 88" fill="none"/>
+      <path d="M50 88 C42 92, 40 100, 50 104" fill="none"/>
+      <path d="M50 104 C56 107, 58 112, 54 118 C52 122, 48 124, 46 128" fill="none"/>
+    </svg>
+  </div>
+  <div class="brand">WhtaLife</div>
+  <div class="tagline">Compassionate Care, Guided by You</div>
+  <h1>Client Care Plan</h1>
+  <p>A guide to the care and goals your health team has prepared with you in mind.</p>
+</div>
+
+<div class="client-bar">
+  <div class="name" contenteditable="true" data-ph="Client Name">Client Name — Wellness Plan</div>
+  <div class="date" contenteditable="true" data-ph="Date">Last Updated: April 2026</div>
+</div>
+
+<!-- SVG icon definitions -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+  <symbol id="i-lungs" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M12 6c-2 0-5 2-6 5s-2 7 0 8 4 0 6-2M12 6c2 0 5 2 6 5s2 7 0 8-4 0-6-2"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a5 5 0 0 1 4.5 2.8A4 4 0 0 1 20 9a4 4 0 0 1-1 7.5A5 5 0 0 1 12 22M12 2a5 5 0 0 0-4.5 2.8A4 4 0 0 0 4 9a4 4 0 0 0 1 7.5A5 5 0 0 0 12 22M12 2v20"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M18 9l-5 5-2-2-4 4"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="8" y="2" width="8" height="4" rx="1"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M10 12h4M10 16h2"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v7M10 9.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 0 1 4 0v6a8 8 0 0 1-8 8h-2c-2.5 0-4.5-1-6.2-3L3 16"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="13" cy="4" r="2"/><path d="M10 22l1-7M16 22l-3-9-2-3-3 1"/><path d="M6 13l3-1 2 3 4-1"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
+  <symbol id="i-bladder" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M8 8c-3 2-4 5-4 8a8 8 0 0 0 16 0c0-3-1-6-4-8"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.34M17 8A15 15 0 0 1 21 3M17 8c-4 4-8 5-10.4 5.6"/></symbol>
+  <symbol id="i-bone" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18.5 5.5a3 3 0 0 0-4.24 0L5.5 14.26a3 3 0 1 0 4.24 4.24l8.76-8.76a3 3 0 0 0 0-4.24z"/></symbol>
+  <symbol id="i-utensils" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 3l5 5-5 5M8 3L3 8l5 5"/><path d="M21 8H3M12 3v18"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></symbol>
+</svg>
+
+<div class="cards" id="cardsContainer">
+  <button class="add-card-btn" onclick="addCard()">+ Add Care Focus Area</button>
+</div>
+
+<div class="action-bar">
+  <button class="action-btn" onclick="downloadPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save as PDF
+  </button>
+  <button class="action-btn" onclick="window.print()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print
+  </button>
+</div>
+
+<script>
+var iconOptions = [
+  { id: 'i-heart', cls: 'heart', label: 'Heart' },
+  { id: 'i-lungs', cls: 'lungs', label: 'Lungs' },
+  { id: 'i-brain', cls: 'brain', label: 'Brain' },
+  { id: 'i-drop', cls: 'kidney', label: 'Kidney' },
+  { id: 'i-chart', cls: 'blood', label: 'Blood' },
+  { id: 'i-clipboard', cls: 'person', label: 'Clipboard' },
+  { id: 'i-hand', cls: 'heart', label: 'Hand' },
+  { id: 'i-shield', cls: 'shield', label: 'Shield' },
+  { id: 'i-eye', cls: 'brain', label: 'Eye' },
+  { id: 'i-walk', cls: 'bone', label: 'Walk' },
+  { id: 'i-zap', cls: 'bone', label: 'Energy' },
+  { id: 'i-bladder', cls: 'kidney', label: 'Bladder' },
+  { id: 'i-leaf', cls: 'food', label: 'Leaf' },
+  { id: 'i-bone', cls: 'bone', label: 'Bone' },
+  { id: 'i-utensils', cls: 'food', label: 'Utensils' },
+  { id: 'i-moon', cls: 'sleep', label: 'Moon' },
+  { id: 'i-book', cls: 'person', label: 'Book' },
+  { id: 'i-user', cls: 'person', label: 'User' },
+  { id: 'i-smile', cls: 'wellbeing', label: 'Smile' },
+  { id: 'i-scale', cls: 'food', label: 'Scale' }
+];
+
+var categories = ['heart', 'breathing', 'brain', 'blood', 'kidney', 'mobility', 'nutrition', 'wellness'];
+var cardCount = 0;
+
+function addCard(data) {
+  cardCount++;
+  var d = data || { icon: 'i-heart', iconCls: 'heart', category: 'heart', priority: 'high', title: 'Card Title', subtitle: 'Brief subtitle', context: 'Why this matters to the client...', goals: ['Goal 1'], actions: ['Action item 1'], eval: 'How we\'ll know it\'s working...' };
+
+  var container = document.getElementById('cardsContainer');
+  var addBtn = container.querySelector('.add-card-btn');
+
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.category = d.category;
+  card.dataset.icon = d.icon;
+  card.dataset.iconCls = d.iconCls;
+
+  var goalsHtml = '';
+  d.goals.forEach(function(g) {
+    goalsHtml += '<li><span contenteditable="true">' + esc(g) + '</span><button class="remove-li" onclick="removeLi(this)">&times;</button></li>';
+  });
+
+  var actionsHtml = '';
+  d.actions.forEach(function(a) {
+    actionsHtml += '<li><span contenteditable="true">' + esc(a) + '</span><button class="remove-li" onclick="removeLi(this)">&times;</button></li>';
+  });
+
+  card.innerHTML =
+    '<button class="remove-btn" onclick="removeCard(this)" title="Remove card">&times;</button>' +
+    '<div class="card-hd" onclick="toggleCard(event, this)">' +
+      '<div class="ic ' + d.iconCls + '" onclick="showIconPicker(event, this)" title="Click to change icon"><svg><use href="#' + d.icon + '"/></svg></div>' +
+      '<div class="card-info">' +
+        '<div class="card-title" contenteditable="true">' + esc(d.title) + '</div>' +
+        '<div class="card-sub" contenteditable="true">' + esc(d.subtitle) + '</div>' +
+      '</div>' +
+      '<span class="badge ' + d.priority + '" onclick="cycleBadge(event, this)" title="Click to change priority">' + capFirst(d.priority) + '</span>' +
+      '<svg class="chev"><use href="#i-chevron"/></svg>' +
+    '</div>' +
+    '<div class="card-bd"><div class="card-inner">' +
+      '<div class="sec">' +
+        '<div class="sec-lbl">Why This Matters</div>' +
+        '<div class="context" contenteditable="true">' + esc(d.context) + '</div>' +
+      '</div>' +
+      '<div class="sec">' +
+        '<div class="sec-lbl">Our Goals Together</div>' +
+        '<ul class="goals" id="goals_c' + cardCount + '">' + goalsHtml + '</ul>' +
+        '<button class="add-item-btn" onclick="addLi(\'goals_c' + cardCount + '\', \'Goal\')">+ Add Goal</button>' +
+      '</div>' +
+      '<div class="sec">' +
+        '<div class="sec-lbl">What We\'re Doing</div>' +
+        '<ul class="action-items" id="actions_c' + cardCount + '">' + actionsHtml + '</ul>' +
+        '<button class="add-item-btn" onclick="addLi(\'actions_c' + cardCount + '\', \'Action item\')">+ Add Action</button>' +
+      '</div>' +
+      '<div class="sec">' +
+        '<div class="sec-lbl">How We\'ll Know It\'s Working</div>' +
+        '<div class="eval" contenteditable="true">' + esc(d.eval) + '</div>' +
+      '</div>' +
+    '</div></div>';
+
+  container.insertBefore(card, addBtn);
+  autoSave();
+}
+
+function toggleCard(e, hd) {
+  if (e.target.closest('.ic') || e.target.closest('.badge') || e.target.hasAttribute('contenteditable')) return;
+  hd.closest('.card').classList.toggle('open');
+}
+
+function removeCard(btn) {
+  if (confirm('Remove this card?')) {
+    btn.closest('.card').remove();
+    autoSave();
+  }
+}
+
+function addLi(listId, placeholder) {
+  var ul = document.getElementById(listId);
+  var li = document.createElement('li');
+  li.innerHTML = '<span contenteditable="true">' + placeholder + '</span><button class="remove-li" onclick="removeLi(this)">&times;</button>';
+  ul.appendChild(li);
+  li.querySelector('span').focus();
+  autoSave();
+}
+
+function removeLi(btn) {
+  var li = btn.closest('li');
+  if (li.parentElement.children.length > 1) {
+    li.remove();
+    autoSave();
+  }
+}
+
+function cycleBadge(e, badge) {
+  e.stopPropagation();
+  var order = ['high', 'medium', 'monitor'];
+  var current = badge.classList.contains('high') ? 'high' : badge.classList.contains('medium') ? 'medium' : 'monitor';
+  var next = order[(order.indexOf(current) + 1) % 3];
+  badge.classList.remove(current);
+  badge.classList.add(next);
+  badge.textContent = capFirst(next);
+  autoSave();
+}
+
+// Icon picker
+var activeIconTarget = null;
+function showIconPicker(e, icDiv) {
+  e.stopPropagation();
+  // Close any existing
+  document.querySelectorAll('.icon-picker').forEach(function(p) { p.remove(); });
+
+  activeIconTarget = icDiv;
+  var picker = document.createElement('div');
+  picker.className = 'icon-picker show';
+
+  iconOptions.forEach(function(opt) {
+    var btn = document.createElement('button');
+    btn.title = opt.label;
+    btn.innerHTML = '<svg><use href="#' + opt.id + '"/></svg>';
+    btn.onclick = function(ev) {
+      ev.stopPropagation();
+      // Update the icon
+      icDiv.className = 'ic ' + opt.cls;
+      icDiv.innerHTML = '<svg><use href="#' + opt.id + '"/></svg>';
+      // Store on card
+      var card = icDiv.closest('.card');
+      card.dataset.icon = opt.id;
+      card.dataset.iconCls = opt.cls;
+      picker.remove();
+      autoSave();
+    };
+    picker.appendChild(btn);
+  });
+
+  icDiv.closest('.card').appendChild(picker);
+}
+
+// Close pickers on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.icon-picker') && !e.target.closest('.ic')) {
+    document.querySelectorAll('.icon-picker').forEach(function(p) { p.remove(); });
+  }
+});
+
+function capFirst(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function esc(str) {
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function downloadPDF() {
+  document.querySelectorAll('.card').forEach(function(c) { c.classList.add('open'); });
+  setTimeout(function() { window.print(); }, 200);
+}
+
+// Auto-save
+var saveTimeout;
+function autoSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(function() {
+    var data = {
+      clientName: document.querySelector('.client-bar .name').textContent,
+      date: document.querySelector('.client-bar .date').textContent,
+      cards: []
+    };
+
+    document.querySelectorAll('.card').forEach(function(card) {
+      var c = {
+        icon: card.dataset.icon,
+        iconCls: card.dataset.iconCls,
+        category: card.dataset.category || 'heart',
+        priority: card.querySelector('.badge').classList.contains('high') ? 'high' : card.querySelector('.badge').classList.contains('medium') ? 'medium' : 'monitor',
+        title: card.querySelector('.card-title').textContent,
+        subtitle: card.querySelector('.card-sub').textContent,
+        context: card.querySelector('.context').textContent,
+        goals: [],
+        actions: [],
+        eval: card.querySelector('.eval').textContent
+      };
+      card.querySelectorAll('.goals li span').forEach(function(s) { c.goals.push(s.textContent); });
+      card.querySelectorAll('.action-items li span').forEach(function(s) { c.actions.push(s.textContent); });
+      data.cards.push(c);
+    });
+
+    try {
+      localStorage.setItem('whtalife_client_builder', JSON.stringify(data));
+      var ind = document.getElementById('saveIndicator');
+      ind.classList.add('show');
+      setTimeout(function() { ind.classList.remove('show'); }, 1500);
+    } catch(e) {}
+  }, 500);
+}
+
+function loadSaved() {
+  try {
+    var raw = localStorage.getItem('whtalife_client_builder');
+    if (!raw) return;
+    var data = JSON.parse(raw);
+
+    if (data.clientName) document.querySelector('.client-bar .name').textContent = data.clientName;
+    if (data.date) document.querySelector('.client-bar .date').textContent = data.date;
+
+    if (data.cards && data.cards.length > 0) {
+      data.cards.forEach(function(c) { addCard(c); });
+    }
+  } catch(e) { console.error('Load error:', e); }
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.hasAttribute('contenteditable')) autoSave();
+});
+
+loadSaved();
+</script>
+
+</body>
+</html>

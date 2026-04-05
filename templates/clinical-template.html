@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhtaLife — Clinical Care Plan Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --aegean: #6F9797;
+    --aegean-dark: #5A8282;
+    --salisbury: #C5C9A8;
+    --spring: #C4CEBC;
+    --cream: #FAFAF8;
+    --white: #FFFFFF;
+    --text: #2C3E3E;
+    --text-mid: #4A6060;
+    --text-light: #7A9494;
+    --border: #D4DDD8;
+    --border-light: #E8EDEA;
+    --accent-red: #8A4A4A;
+    --accent-red-bg: #F5EAEA;
+    --accent-amber: #7A6A3A;
+    --accent-amber-bg: #F0ECDF;
+    --accent-green: #4A7A4A;
+    --accent-green-bg: #E5EDE5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .logo-mark {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 28px; height: 28px; }
+  .header-text .brand {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .header-text .doc-type {
+    font-size: 0.78rem; font-weight: 300; opacity: 0.8; margin-top: 0.1rem;
+  }
+
+  .meta-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 0.5rem;
+    max-width: 960px; margin: 0 auto;
+  }
+  .meta-bar .label { font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta-bar .value {
+    font-family: 'Lora', serif; font-size: 0.85rem; font-weight: 600; color: var(--aegean-dark);
+  }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+
+  /* Editable fields */
+  [contenteditable] {
+    outline: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.2s, background 0.2s;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  [contenteditable]:hover {
+    border-bottom-color: var(--aegean);
+  }
+  [contenteditable]:focus {
+    border-bottom-color: var(--aegean-dark);
+    background: rgba(111,151,151,0.06);
+  }
+  [contenteditable].placeholder {
+    color: var(--text-light);
+    font-style: italic;
+  }
+
+  /* Diagnosis card */
+  .dx {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    page-break-inside: avoid;
+    position: relative;
+  }
+
+  .dx-header {
+    padding: 0.85rem 1.25rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--cream);
+    border-radius: 6px 6px 0 0;
+  }
+  .dx-num {
+    font-family: 'Lora', serif;
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--white);
+    background: var(--aegean-dark);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .dx-title {
+    font-family: 'Lora', serif;
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .dx-badge {
+    font-size: 0.58rem; font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dx-badge.high { background: var(--accent-red-bg); color: var(--accent-red); }
+  .dx-badge.medium { background: var(--accent-amber-bg); color: var(--accent-amber); }
+  .dx-badge.monitor { background: var(--accent-green-bg); color: var(--accent-green); }
+
+  .dx-body { padding: 1rem 1.25rem; }
+
+  .dx-section { margin-bottom: 1rem; }
+  .dx-section:last-child { margin-bottom: 0; }
+
+  .dx-label {
+    font-size: 0.62rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    color: var(--aegean-dark);
+    margin-bottom: 0.35rem;
+    display: flex; align-items: center; gap: 0.35rem;
+  }
+  .dx-label::before {
+    content: '';
+    width: 3px; height: 12px;
+    background: var(--aegean);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .dx-statement {
+    font-size: 0.82rem; color: var(--text);
+    line-height: 1.6;
+    padding: 0.6rem 0.85rem;
+    background: var(--cream);
+    border-left: 2px solid var(--salisbury);
+    border-radius: 0 4px 4px 0;
+    min-height: 2.5rem;
+  }
+
+  .dx-goals { list-style: none; }
+  .dx-goals li {
+    font-size: 0.8rem; color: var(--text-mid);
+    padding: 0.25rem 0 0.25rem 1.1rem;
+    position: relative;
+    line-height: 1.55;
+  }
+  .dx-goals li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.6rem;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--aegean);
+  }
+
+  .dx-interventions {
+    list-style: none;
+    counter-reset: interv;
+  }
+  .dx-interventions li {
+    font-size: 0.8rem; color: var(--text-mid);
+    padding: 0.3rem 0 0.3rem 2rem;
+    position: relative;
+    line-height: 1.55;
+    counter-increment: interv;
+  }
+  .dx-interventions li::before {
+    content: counter(interv);
+    position: absolute; left: 0; top: 0.3rem;
+    font-size: 0.65rem; font-weight: 600;
+    color: var(--aegean-dark);
+    background: rgba(111,151,151,0.1);
+    width: 1.4rem; height: 1.4rem;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .dx-eval {
+    font-size: 0.8rem; color: var(--accent-green);
+    padding: 0.5rem 0.75rem;
+    background: var(--accent-green-bg);
+    border-radius: 4px;
+    line-height: 1.55;
+    min-height: 2rem;
+  }
+
+  /* Priority dividers */
+  .priority-divider {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 1.5rem 0 1rem;
+  }
+  .priority-divider::before,
+  .priority-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .priority-divider span {
+    font-size: 0.65rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-light);
+    white-space: nowrap;
+  }
+
+  /* Add / Remove buttons */
+  .add-item-btn {
+    background: none; border: 1px dashed var(--border);
+    color: var(--text-light); font-size: 0.72rem; font-family: 'Inter', sans-serif;
+    padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;
+    margin-top: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;
+    transition: all 0.15s;
+  }
+  .add-item-btn:hover { border-color: var(--aegean); color: var(--aegean-dark); }
+
+  .add-dx-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; padding: 0.85rem;
+    background: var(--white); border: 2px dashed var(--border);
+    border-radius: 6px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
+    color: var(--text-light);
+    transition: all 0.15s;
+    margin-bottom: 1rem;
+  }
+  .add-dx-btn:hover { border-color: var(--aegean); color: var(--aegean-dark); }
+
+  .remove-btn {
+    position: absolute; top: 0.6rem; right: 0.6rem;
+    background: none; border: none;
+    color: var(--text-light); cursor: pointer;
+    width: 24px; height: 24px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; line-height: 1;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .dx:hover .remove-btn { opacity: 1; }
+  .remove-btn:hover { background: var(--accent-red-bg); color: var(--accent-red); }
+
+  .remove-li {
+    display: none;
+    background: none; border: none;
+    color: var(--text-light); cursor: pointer;
+    font-size: 0.7rem; margin-left: 0.25rem;
+    padding: 0 0.2rem; border-radius: 2px;
+  }
+  li:hover .remove-li { display: inline; }
+  .remove-li:hover { color: var(--accent-red); }
+
+  /* Action bar */
+  .action-bar {
+    position: fixed; bottom: 1.25rem; right: 1.25rem;
+    display: flex; gap: 0.5rem; z-index: 100;
+  }
+  .action-btn {
+    background: var(--aegean-dark); color: white; border: none;
+    height: 38px; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    padding: 0 0.85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 500;
+  }
+  .action-btn:hover { background: var(--aegean); }
+  .action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* Save indicator */
+  .save-indicator {
+    position: fixed; top: 1rem; right: 1rem;
+    font-size: 0.7rem; color: var(--accent-green);
+    background: var(--accent-green-bg);
+    padding: 0.3rem 0.7rem; border-radius: 4px;
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 100; pointer-events: none;
+  }
+  .save-indicator.show { opacity: 1; }
+
+  @media print {
+    body { background: white; font-size: 11px; }
+    .header { padding: 1rem 1.5rem; }
+    .header-text .brand { font-size: 1.1rem; }
+    .action-bar, .add-dx-btn, .add-item-btn, .remove-btn, .remove-li, .save-indicator { display: none !important; }
+    .dx { page-break-inside: avoid; border-color: #ccc; }
+    .dx-header { background: #f5f5f5; }
+    .container { padding: 0.5rem 1rem 0; }
+    .priority-divider { margin: 1rem 0 0.75rem; }
+    [contenteditable] { border-bottom: none !important; }
+  }
+
+  @media (max-width: 700px) {
+    .header { padding: 1.25rem 1rem; }
+    .container { padding: 0.75rem 0.75rem 4rem; }
+    .meta-bar { padding: 0.6rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="save-indicator" id="saveIndicator">Saved</div>
+
+<div class="header">
+  <div class="logo-mark">
+    <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 38 C50 30, 42 18, 36 16 C28 13, 22 18, 22 26 C22 34, 30 40, 50 44"/>
+      <path d="M50 38 C50 30, 58 18, 64 16 C72 13, 78 18, 78 26 C78 34, 70 40, 50 44"/>
+      <path d="M56 46 C62 42, 74 38, 80 40 C87 43, 88 50, 84 56 C79 63, 68 62, 54 52"/>
+      <path d="M56 46 C64 50, 78 52, 82 56 C88 62, 85 70, 78 72 C71 74, 62 66, 54 52"/>
+      <path d="M44 46 C38 42, 26 38, 20 40 C13 43, 12 50, 16 56 C21 63, 32 62, 46 52"/>
+      <path d="M44 46 C36 50, 22 52, 18 56 C12 62, 15 70, 22 72 C29 74, 38 66, 46 52"/>
+      <line x1="44" y1="38" x2="40" y2="34"/>
+      <line x1="56" y1="38" x2="60" y2="34"/>
+      <circle cx="50" cy="44" r="2" fill="white" stroke="none"/>
+      <line x1="50" y1="44" x2="50" y2="130"/>
+      <path d="M50 56 C42 60, 40 68, 50 72" fill="none"/>
+      <path d="M50 72 C58 76, 60 84, 50 88" fill="none"/>
+      <path d="M50 88 C42 92, 40 100, 50 104" fill="none"/>
+      <path d="M50 104 C56 107, 58 112, 54 118 C52 122, 48 124, 46 128" fill="none"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <div class="brand">WhtaLife</div>
+    <div class="doc-type">Clinical Nursing Care Plan</div>
+  </div>
+</div>
+
+<div class="meta-bar">
+  <div><div class="label">Client</div><div class="value" contenteditable="true" data-ph="Client Name">Client Name</div></div>
+  <div><div class="label">Total Diagnoses</div><div class="value" id="dxCount">0</div></div>
+  <div><div class="label">Last Updated</div><div class="value" contenteditable="true" data-ph="Month Year">April 2026</div></div>
+</div>
+
+<div class="container" id="container">
+
+  <div class="priority-divider"><span>High Priority</span></div>
+  <div id="highGroup"></div>
+  <button class="add-dx-btn" onclick="addDx('high')">+ Add High Priority Diagnosis</button>
+
+  <div class="priority-divider"><span>Medium Priority</span></div>
+  <div id="mediumGroup"></div>
+  <button class="add-dx-btn" onclick="addDx('medium')">+ Add Medium Priority Diagnosis</button>
+
+  <div class="priority-divider"><span>Monitor</span></div>
+  <div id="monitorGroup"></div>
+  <button class="add-dx-btn" onclick="addDx('monitor')">+ Add Monitor Diagnosis</button>
+
+</div>
+
+<div class="action-bar">
+  <button class="action-btn" onclick="downloadPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save as PDF
+  </button>
+  <button class="action-btn" onclick="window.print()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print
+  </button>
+</div>
+
+<script>
+var dxCounter = 0;
+
+function addDx(priority) {
+  dxCounter++;
+  var group = document.getElementById(priority === 'high' ? 'highGroup' : priority === 'medium' ? 'mediumGroup' : 'monitorGroup');
+
+  var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
+
+  var div = document.createElement('div');
+  div.className = 'dx';
+  div.dataset.priority = priority;
+  div.innerHTML =
+    '<button class="remove-btn" onclick="removeDx(this)" title="Remove diagnosis">&times;</button>' +
+    '<div class="dx-header">' +
+      '<div class="dx-num">' + dxCounter + '</div>' +
+      '<div class="dx-title" contenteditable="true" data-ph="Diagnosis Title">Diagnosis Title</div>' +
+      '<span class="dx-badge ' + priority + '" onclick="cyclePriority(this)" title="Click to change priority">' + labels[priority] + '</span>' +
+    '</div>' +
+    '<div class="dx-body">' +
+      '<div class="dx-section">' +
+        '<div class="dx-label">Nursing Diagnosis</div>' +
+        '<div class="dx-statement" contenteditable="true" data-ph="Full NANDA diagnosis statement...">Full NANDA diagnosis statement. Related to... as evidenced by...</div>' +
+      '</div>' +
+      '<div class="dx-section">' +
+        '<div class="dx-label">Goals</div>' +
+        '<ul class="dx-goals" id="goals_' + dxCounter + '">' +
+          '<li><span contenteditable="true" data-ph="Goal">Goal 1</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>' +
+        '</ul>' +
+        '<button class="add-item-btn" onclick="addItem(\'goals_' + dxCounter + '\', \'Goal\')">+ Add Goal</button>' +
+      '</div>' +
+      '<div class="dx-section">' +
+        '<div class="dx-label">Interventions</div>' +
+        '<ul class="dx-interventions" id="interv_' + dxCounter + '">' +
+          '<li><span contenteditable="true" data-ph="Intervention">Intervention 1</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>' +
+        '</ul>' +
+        '<button class="add-item-btn" onclick="addItem(\'interv_' + dxCounter + '\', \'Intervention\')">+ Add Intervention</button>' +
+      '</div>' +
+      '<div class="dx-section">' +
+        '<div class="dx-label">Evaluation</div>' +
+        '<div class="dx-eval" contenteditable="true" data-ph="Evaluation criteria...">Evaluation criteria — what does success look like?</div>' +
+      '</div>' +
+    '</div>';
+
+  group.appendChild(div);
+  updateCount();
+  autoSave();
+
+  // Focus the title
+  div.querySelector('.dx-title').focus();
+}
+
+function removeDx(btn) {
+  if (confirm('Remove this diagnosis?')) {
+    btn.closest('.dx').remove();
+    renumber();
+    updateCount();
+    autoSave();
+  }
+}
+
+function addItem(listId, placeholder) {
+  var ul = document.getElementById(listId);
+  var li = document.createElement('li');
+  li.innerHTML = '<span contenteditable="true" data-ph="' + placeholder + '">' + placeholder + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button>';
+  ul.appendChild(li);
+  li.querySelector('span').focus();
+  autoSave();
+}
+
+function removeItem(btn) {
+  var li = btn.closest('li');
+  var ul = li.parentElement;
+  if (ul.children.length > 1) {
+    li.remove();
+    autoSave();
+  }
+}
+
+function cyclePriority(badge) {
+  var order = ['high', 'medium', 'monitor'];
+  var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
+  var current = badge.classList.contains('high') ? 'high' : badge.classList.contains('medium') ? 'medium' : 'monitor';
+  var next = order[(order.indexOf(current) + 1) % 3];
+  badge.classList.remove(current);
+  badge.classList.add(next);
+  badge.textContent = labels[next];
+
+  // Move to correct group
+  var dx = badge.closest('.dx');
+  dx.dataset.priority = next;
+  var group = document.getElementById(next === 'high' ? 'highGroup' : next === 'medium' ? 'mediumGroup' : 'monitorGroup');
+  group.appendChild(dx);
+  renumber();
+  autoSave();
+}
+
+function renumber() {
+  var all = document.querySelectorAll('.dx');
+  all.forEach(function(dx, i) {
+    dx.querySelector('.dx-num').textContent = i + 1;
+  });
+  dxCounter = all.length;
+}
+
+function updateCount() {
+  document.getElementById('dxCount').textContent = document.querySelectorAll('.dx').length;
+}
+
+function downloadPDF() {
+  setTimeout(function() { window.print(); }, 100);
+}
+
+// Auto-save to localStorage
+var saveTimeout;
+function autoSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(function() {
+    var data = { meta: {}, diagnoses: [] };
+
+    // Save meta
+    document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
+      data.meta[el.dataset.ph] = el.textContent;
+    });
+
+    // Save each diagnosis
+    document.querySelectorAll('.dx').forEach(function(dx) {
+      var d = {
+        priority: dx.dataset.priority,
+        title: dx.querySelector('.dx-title').textContent,
+        statement: dx.querySelector('.dx-statement').textContent,
+        goals: [],
+        interventions: [],
+        evaluation: dx.querySelector('.dx-eval').textContent
+      };
+      dx.querySelectorAll('.dx-goals li span').forEach(function(s) { d.goals.push(s.textContent); });
+      dx.querySelectorAll('.dx-interventions li span').forEach(function(s) { d.interventions.push(s.textContent); });
+      data.diagnoses.push(d);
+    });
+
+    try {
+      localStorage.setItem('whtalife_clinical_builder', JSON.stringify(data));
+      var ind = document.getElementById('saveIndicator');
+      ind.classList.add('show');
+      setTimeout(function() { ind.classList.remove('show'); }, 1500);
+    } catch(e) {}
+  }, 500);
+}
+
+function loadSaved() {
+  try {
+    var raw = localStorage.getItem('whtalife_clinical_builder');
+    if (!raw) return;
+    var data = JSON.parse(raw);
+
+    // Restore meta
+    if (data.meta) {
+      document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
+        if (data.meta[el.dataset.ph]) el.textContent = data.meta[el.dataset.ph];
+      });
+    }
+
+    // Restore diagnoses
+    if (data.diagnoses && data.diagnoses.length > 0) {
+      data.diagnoses.forEach(function(d) {
+        dxCounter++;
+        var group = document.getElementById(d.priority === 'high' ? 'highGroup' : d.priority === 'medium' ? 'mediumGroup' : 'monitorGroup');
+        var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
+
+        var goalsHtml = '';
+        d.goals.forEach(function(g) {
+          goalsHtml += '<li><span contenteditable="true" data-ph="Goal">' + esc(g) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
+        });
+
+        var intervHtml = '';
+        d.interventions.forEach(function(v) {
+          intervHtml += '<li><span contenteditable="true" data-ph="Intervention">' + esc(v) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
+        });
+
+        var div = document.createElement('div');
+        div.className = 'dx';
+        div.dataset.priority = d.priority;
+        div.innerHTML =
+          '<button class="remove-btn" onclick="removeDx(this)" title="Remove diagnosis">&times;</button>' +
+          '<div class="dx-header">' +
+            '<div class="dx-num">' + dxCounter + '</div>' +
+            '<div class="dx-title" contenteditable="true" data-ph="Diagnosis Title">' + esc(d.title) + '</div>' +
+            '<span class="dx-badge ' + d.priority + '" onclick="cyclePriority(this)" title="Click to change priority">' + labels[d.priority] + '</span>' +
+          '</div>' +
+          '<div class="dx-body">' +
+            '<div class="dx-section">' +
+              '<div class="dx-label">Nursing Diagnosis</div>' +
+              '<div class="dx-statement" contenteditable="true" data-ph="Full NANDA diagnosis statement...">' + esc(d.statement) + '</div>' +
+            '</div>' +
+            '<div class="dx-section">' +
+              '<div class="dx-label">Goals</div>' +
+              '<ul class="dx-goals" id="goals_' + dxCounter + '">' + goalsHtml + '</ul>' +
+              '<button class="add-item-btn" onclick="addItem(\'goals_' + dxCounter + '\', \'Goal\')">+ Add Goal</button>' +
+            '</div>' +
+            '<div class="dx-section">' +
+              '<div class="dx-label">Interventions</div>' +
+              '<ul class="dx-interventions" id="interv_' + dxCounter + '">' + intervHtml + '</ul>' +
+              '<button class="add-item-btn" onclick="addItem(\'interv_' + dxCounter + '\', \'Intervention\')">+ Add Intervention</button>' +
+            '</div>' +
+            '<div class="dx-section">' +
+              '<div class="dx-label">Evaluation</div>' +
+              '<div class="dx-eval" contenteditable="true" data-ph="Evaluation criteria...">' + esc(d.evaluation) + '</div>' +
+            '</div>' +
+          '</div>';
+
+        group.appendChild(div);
+      });
+      updateCount();
+    }
+  } catch(e) { console.error('Load error:', e); }
+}
+
+function esc(str) {
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// Listen for edits
+document.addEventListener('input', function(e) {
+  if (e.target.hasAttribute('contenteditable')) {
+    autoSave();
+  }
+});
+
+// Load on start
+loadSaved();
+</script>
+
+</body>
+</html>
