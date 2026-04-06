@@ -686,8 +686,13 @@ function renderCharts() {
         '<div class="chart-row"><canvas id="ch_' + v.key + '_e"></canvas><div class="chart-label">Evening · 8 pm<span class="median" id="md_' + v.key + '_e">—</span></div></div>' +
       '</div>';
     area.appendChild(block);
-    drawChart('ch_' + v.key + '_m', 'md_' + v.key + '_m', v, 'morning');
-    drawChart('ch_' + v.key + '_e', 'md_' + v.key + '_e', v, 'evening');
+  });
+  // Wait for layout before drawing so canvas dimensions are correct
+  requestAnimationFrame(function() {
+    VITALS.forEach(function(v) {
+      drawChart('ch_' + v.key + '_m', 'md_' + v.key + '_m', v, 'morning');
+      drawChart('ch_' + v.key + '_e', 'md_' + v.key + '_e', v, 'evening');
+    });
   });
 }
 
@@ -777,8 +782,8 @@ function drawChart(canvasId, medianId, vital, period) {
   if (med !== null) {
     var medY = yToPx(med);
     ctx.strokeStyle = '#E89F4A';
-    ctx.lineWidth = 1.2;
-    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
     ctx.beginPath();
     ctx.moveTo(padL, medY);
     ctx.lineTo(padL + plotW, medY);
@@ -787,26 +792,31 @@ function drawChart(canvasId, medianId, vital, period) {
     document.getElementById(medianId).textContent = 'median ' + (vital.decimals ? med.toFixed(1) : Math.round(med));
   }
 
-  // Data line
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  points.forEach(function(p, i) {
-    var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
-    var y = yToPx(p.value);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+  // Data line (only if 2+ points)
+  if (points.length >= 2) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach(function(p, i) {
+      var x = padL + (i / (points.length - 1)) * plotW;
+      var y = yToPx(p.value);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
 
-  // Dots
+  // Dots (larger so they're visible)
   ctx.fillStyle = color;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
   points.forEach(function(p, i) {
     var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
     var y = yToPx(p.value);
     ctx.beginPath();
-    ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
   });
 }
 
