@@ -6,53 +6,75 @@
 <title>WhtaLife — Care Plan Templates</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
-  :root { --aegean-dark: #5A8282; --aegean: #6F9797; --cream: #FAFAF8; --white: #FFFFFF; --text: #2C3E3E; --text-mid: #4A6060; --text-light: #7A9494; --border: #D4DDD8; }
+  :root { --aegean-dark: #5A8282; --aegean: #6F9797; --aegean-light: #C8D8D8; --cream: #FAFAF8; --white: #FFFFFF; --text: #2C3E3E; --text-mid: #4A6060; --text-light: #7A9494; --border: #C8D8D8; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(160deg, #E8F0EE 0%, var(--cream) 45%, #E8F0EE 100%);
+    color: var(--text); line-height: 1.6; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
   .container { max-width: 480px; width: 100%; text-align: center; }
-  .logo-mark { width: 110px; height: 110px; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; }
+  .header-band {
+    background: var(--aegean-dark);
+    padding: 2rem 1.5rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 4px solid var(--aegean);
+  }
+  .logo-mark { width: 110px; height: 110px; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; background: var(--cream); border: 3px solid rgba(255,255,255,0.4); }
   .logo-mark img { width: 130%; height: 130%; object-fit: contain; }
-  .brand { font-family: 'Lora', serif; font-size: 2rem; font-weight: 700; color: var(--aegean-dark); letter-spacing: 0.5px; }
-  .tagline { font-size: 0.85rem; color: var(--text-light); margin-top: 0.25rem; }
-  .cards { margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .brand { font-family: 'Lora', serif; font-size: 2rem; font-weight: 700; color: var(--white); letter-spacing: 0.5px; }
+  .tagline { font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-top: 0.25rem; font-weight: 300; }
+  .body-band {
+    background: var(--white);
+    padding: 1.75rem 1.5rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 20px rgba(90,130,130,0.12);
+  }
+  .cards { display: flex; flex-direction: column; gap: 0.75rem; }
   .card-link {
     display: block; padding: 1.25rem 1.5rem;
-    background: var(--white); border: 1px solid var(--border); border-radius: 8px;
+    background: var(--cream); border: 1px solid var(--border); border-left: 4px solid var(--aegean); border-radius: 8px;
     text-decoration: none; color: var(--text); text-align: left;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: all 0.15s;
   }
-  .card-link:hover { border-color: var(--aegean); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  .card-link .title { font-family: 'Lora', serif; font-size: 0.95rem; font-weight: 600; color: var(--aegean-dark); }
-  .card-link .desc { font-size: 0.78rem; color: var(--text-mid); margin-top: 0.2rem; }
-  .privacy { margin-top: 2rem; padding: 1rem 1.25rem; background: rgba(94,142,94,0.06); border: 1px solid rgba(94,142,94,0.15); border-radius: 6px; font-size: 0.72rem; color: #4A7A4A; line-height: 1.5; text-align: left; }
+  .card-link:hover { border-color: var(--aegean-dark); border-left-color: var(--aegean-dark); box-shadow: 0 4px 12px rgba(90,130,130,0.15); transform: translateY(-1px); }
+  .card-link .title { font-family: 'Lora', serif; font-size: 1rem; font-weight: 600; color: var(--aegean-dark); }
+  .card-link .desc { font-size: 0.78rem; color: var(--text-mid); margin-top: 0.25rem; }
+  .privacy { margin-top: 1.25rem; padding: 0.85rem 1.1rem; background: rgba(111,151,151,0.08); border: 1px solid rgba(111,151,151,0.2); border-left: 3px solid var(--aegean); border-radius: 6px; font-size: 0.72rem; color: var(--aegean-dark); line-height: 1.5; text-align: left; }
   .privacy strong { font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="logo-mark">
-    <img src="assets/logo.png" alt="WhtaLife logo">
-  </div>
-  <div class="brand">WhtaLife</div>
-  <div class="tagline">Mission Statement</div>
-
-  <div class="cards">
-    <a class="card-link" href="templates/clinical-template.html">
-      <div class="title">Nursing Care Plan</div>
-      <div class="desc">For nursing staff. Full NANDA diagnoses, goals, interventions, and evaluations. Add, edit, and organize diagnoses by priority.</div>
-    </a>
-    <a class="card-link" href="templates/client-template.html">
-      <div class="title">Patient Care Plan</div>
-      <div class="desc">For patients and families. Plain-language care goals with interactive checklists, notes, and progress tracking.</div>
-    </a>
-    <a class="card-link" href="templates/vitals-template.html">
-      <div class="title">Vital Signs Report Builder</div>
-      <div class="desc">Track blood pressure, heart rate, temperature, SpO₂, respiratory rate, and glucose. Charts and statistics auto-generate as you enter readings.</div>
-    </a>
+  <div class="header-band">
+    <div class="logo-mark">
+      <img src="assets/logo.png" alt="WhtaLife logo">
+    </div>
+    <div class="brand">WhtaLife</div>
+    <div class="tagline">Mission Statement</div>
   </div>
 
-  <div class="privacy">
-    <strong>Privacy Notice:</strong> All information entered into these templates is stored locally in your browser only. No data is transmitted to any server. No patient information is stored online. Export your completed care plan as a PDF for your records.
+  <div class="body-band">
+    <div class="cards">
+      <a class="card-link" href="templates/clinical-template.html">
+        <div class="title">Nursing Care Plan</div>
+        <div class="desc">For nursing staff. Full NANDA diagnoses, goals, interventions, and evaluations. Add, edit, and organize diagnoses by priority.</div>
+      </a>
+      <a class="card-link" href="templates/client-template.html">
+        <div class="title">Patient Care Plan</div>
+        <div class="desc">For patients and families. Plain-language care goals with interactive checklists, notes, and progress tracking.</div>
+      </a>
+      <a class="card-link" href="templates/vitals-template.html">
+        <div class="title">Vital Signs Report Builder</div>
+        <div class="desc">Track blood pressure, heart rate, temperature, SpO₂, respiratory rate, and glucose. Charts and statistics auto-generate as you enter readings.</div>
+      </a>
+    </div>
+
+    <div class="privacy">
+      <strong>Privacy Notice:</strong> All information entered into these templates is stored locally in your browser only. No data is transmitted to any server. No patient information is stored online. Export your completed care plan as a PDF for your records.
+    </div>
   </div>
 </div>
 </body>
