@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhtaLife — Vital Signs Report Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --aegean: #6F9797;
+    --aegean-dark: #5A8282;
+    --aegean-darker: #3F6868;
+    --salisbury: #C5C9A8;
+    --spring: #C4CEBC;
+    --cream: #FAF8F2;
+    --white: #FFFFFF;
+    --text: #2C3E3E;
+    --text-mid: #4A6060;
+    --text-light: #7A9494;
+    --border: #D4DDD8;
+    --border-light: #E8EDEA;
+    --normal-bg: rgba(196,206,188,0.35);
+    --normal-line: #4A7A4A;
+    --high-bg: #FCEEDD;
+    --high-text: #B86A2A;
+    --low-bg: #DCEEEC;
+    --low-text: #2A7A78;
+    --morning: #2E7D6B;
+    --evening: #C7572A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .header {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .logo-mark {
+    width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: var(--cream);
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .logo-mark img { width: 130%; height: 130%; object-fit: contain; }
+  .header-text .brand {
+    font-family: 'Lora', serif;
+    font-size: 0.95rem; font-weight: 500; letter-spacing: 0.3px; opacity: 0.9;
+  }
+  .header-text .title {
+    font-family: 'Lora', serif;
+    font-size: 1.6rem; font-weight: 700; letter-spacing: 0.3px;
+    margin-top: 0.1rem;
+  }
+  .header-text .subtitle {
+    font-size: 0.78rem; opacity: 0.8; margin-top: 0.15rem;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
+  /* Editable fields */
+  [contenteditable] {
+    outline: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.2s, background 0.2s;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  [contenteditable]:hover { border-bottom-color: var(--aegean); }
+  [contenteditable]:focus { border-bottom-color: var(--aegean-dark); background: rgba(111,151,151,0.06); }
+
+  .meta-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .meta-row .label { font-size: 0.65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta-row .value { font-family: 'Lora', serif; font-weight: 600; color: var(--aegean-dark); font-size: 0.85rem; margin-top: 0.1rem; }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .summary-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--aegean);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+  }
+  .summary-card .label {
+    font-size: 0.7rem; color: var(--text-light);
+    margin-bottom: 0.3rem;
+  }
+  .summary-card .value {
+    font-family: 'Lora', serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--aegean-dark);
+    line-height: 1.1;
+  }
+  .summary-card .unit {
+    font-size: 0.85rem; font-weight: 500; color: var(--text-mid); margin-left: 0.2rem;
+  }
+  .summary-card .sub {
+    font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;
+  }
+
+  /* Section heading */
+  h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.2rem; font-weight: 600;
+    color: var(--aegean-dark);
+    margin: 1.75rem 0 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-desc {
+    font-size: 0.78rem; color: var(--text-mid);
+    margin-bottom: 1rem;
+  }
+
+  /* Charts */
+  .chart-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.85rem;
+  }
+  .chart-title {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    color: var(--aegean-dark);
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .chart-pair { display: flex; flex-direction: column; gap: 0.4rem; }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 70px;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .chart-row canvas {
+    width: 100%; height: 80px;
+    border-radius: 4px;
+  }
+  .chart-label {
+    font-size: 0.7rem;
+    color: var(--text-mid);
+    font-weight: 500;
+    text-align: left;
+  }
+  .chart-label .median {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-light);
+    font-weight: 400;
+    margin-top: 0.1rem;
+  }
+
+  /* Statistical Summary table */
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.78rem;
+  }
+  .stats-table th {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .stats-table td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-mid);
+  }
+  .stats-table tr:last-child td { border-bottom: none; }
+  .stats-table .vital-name { font-weight: 600; color: var(--text); }
+
+  /* Reading log table */
+  .log-toolbar {
+    display: flex; gap: 0.5rem; align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .log-toolbar .info {
+    font-size: 0.7rem; color: var(--text-light);
+    flex: 1;
+  }
+  .add-row-btn {
+    background: var(--aegean-dark); color: white;
+    border: none; border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem; font-weight: 500;
+    cursor: pointer;
+  }
+  .add-row-btn:hover { background: var(--aegean); }
+  .clear-btn {
+    background: none; color: var(--text-light);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem; font-weight: 500;
+    cursor: pointer;
+  }
+  .clear-btn:hover { color: var(--high-text); border-color: var(--high-text); }
+
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.76rem;
+  }
+  .log-table th {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 0.55rem 0.5rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .log-table td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-mid);
+  }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-table tr.high { background: var(--high-bg); }
+  .log-table tr.high td { color: var(--high-text); }
+  .log-table tr.low { background: var(--low-bg); }
+  .log-table tr.low td { color: var(--low-text); }
+  .log-table input[type="text"], .log-table input[type="number"], .log-table input[type="datetime-local"] {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.76rem;
+    color: inherit;
+    padding: 0.15rem 0.2rem;
+    border-radius: 3px;
+  }
+  .log-table input:focus {
+    outline: 1px solid var(--aegean);
+    background: var(--white);
+  }
+  .log-table .status-cell { font-weight: 600; font-size: 0.7rem; }
+  .log-table .row-remove {
+    background: none; border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    width: 20px; height: 20px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+  .log-table .row-remove:hover { background: rgba(184,106,42,0.15); color: var(--high-text); }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-light);
+    font-size: 0.85rem;
+  }
+
+  /* Action bar */
+  .action-bar {
+    position: fixed; bottom: 1.25rem; right: 1.25rem;
+    display: flex; gap: 0.5rem; z-index: 100;
+  }
+  .action-btn {
+    background: var(--aegean-dark); color: white; border: none;
+    height: 38px; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    padding: 0 0.85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 500;
+  }
+  .action-btn:hover { background: var(--aegean); }
+  .action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .save-indicator {
+    position: fixed; top: 1rem; right: 1rem;
+    font-size: 0.7rem; color: #4A7A4A;
+    background: #E5EDE5;
+    padding: 0.3rem 0.7rem; border-radius: 4px;
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 100; pointer-events: none;
+  }
+  .save-indicator.show { opacity: 1; }
+
+  .footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media print {
+    body { background: white; font-size: 10px; }
+    .action-bar, .add-row-btn, .clear-btn, .row-remove, .save-indicator { display: none !important; }
+    .chart-block, .stats-table, .log-table, .summary-card, .meta-row { page-break-inside: avoid; border-color: #ccc !important; }
+    [contenteditable] { border-bottom: none !important; }
+    .header { padding: 1rem 1.5rem; }
+  }
+  @media (max-width: 700px) {
+    .container { padding: 0.75rem; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .header { padding: 1.25rem 1rem; }
+    .header-text .title { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="save-indicator" id="saveIndicator">Saved</div>
+
+<div class="header">
+  <div class="logo-mark">
+    <img src="../assets/logo.png" alt="WhtaLife logo">
+  </div>
+  <div class="header-text">
+    <div class="brand">Whtalife Private Care</div>
+    <div class="title">Vital Signs Report</div>
+    <div class="subtitle">Confidential clinical reference document</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="meta-row">
+    <div>
+      <div class="label">Client</div>
+      <div class="value" contenteditable="true">Client Name</div>
+    </div>
+    <div>
+      <div class="label">Period Start</div>
+      <div class="value" contenteditable="true">September 01, 2024</div>
+    </div>
+    <div>
+      <div class="label">Period End</div>
+      <div class="value" contenteditable="true">November 29, 2024</div>
+    </div>
+    <div>
+      <div class="label">Generated</div>
+      <div class="value" id="genDate">—</div>
+    </div>
+  </div>
+
+  <div class="summary-grid" id="summaryGrid">
+    <!-- summary cards inserted by JS -->
+  </div>
+
+  <h2>Trend Charts — Morning vs Evening</h2>
+  <div class="section-desc">For each vital sign the morning (8 am) chart is shown above and the evening (8 pm) chart directly below. The shaded green band marks the standard normal reference range.</div>
+
+  <div id="chartsArea"><!-- chart blocks inserted by JS --></div>
+
+  <h2>Statistical Summary</h2>
+  <table class="stats-table" id="statsTable">
+    <thead>
+      <tr>
+        <th>Vital Sign</th>
+        <th>Morning avg</th>
+        <th>Evening avg</th>
+        <th>Overall mean</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Std dev</th>
+        <th>Normal range</th>
+        <th>Unit</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Reading Log</h2>
+  <div class="section-desc">Enter each reading below. Charts and statistics update automatically. Highlighted rows: orange = High; teal = Low. High thresholds: sys BP &gt;135, dia &gt;85, SpO₂ &lt;97%, glucose &gt;7.8 mmol/L. Low thresholds: HR &lt;60, glucose &lt;4.0 mmol/L.</div>
+
+  <div class="log-toolbar">
+    <div class="info" id="rowInfo">0 readings</div>
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
+    <button class="add-row-btn" onclick="addRow()">+ Add Reading</button>
+  </div>
+
+  <table class="log-table" id="logTable">
+    <thead>
+      <tr>
+        <th>Date &amp; Time</th>
+        <th>Temp °C</th>
+        <th>BP</th>
+        <th>HR</th>
+        <th>SpO₂ %</th>
+        <th>RR</th>
+        <th>Glucose</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="logBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState">No readings yet. Click <strong>+ Add Reading</strong> to begin entering vital signs.</div>
+
+  <div class="footer">
+    Report auto-generated from entered data. Data is stored locally in your browser only and is never transmitted online.
+  </div>
+
+</div>
+
+<div class="action-bar">
+  <button class="action-btn" onclick="downloadPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save as PDF
+  </button>
+  <button class="action-btn" onclick="window.print()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print
+  </button>
+</div>
+
+<script>
+// =====================================================
+// VITAL SIGN DEFINITIONS
+// =====================================================
+var VITALS = [
+  { key: 'temp',     label: 'Temperature',     unit: '°C',    normal: [36.6, 37.2], chartMin: 35.5, chartMax: 37.9, decimals: 1 },
+  { key: 'sys',      label: 'Systolic BP',     unit: 'mmHg',  normal: [90, 130],    chartMin: 100,  chartMax: 155,  decimals: 0 },
+  { key: 'dia',      label: 'Diastolic BP',    unit: 'mmHg',  normal: [60, 80],     chartMin: 55,   chartMax: 105,  decimals: 0 },
+  { key: 'hr',       label: 'Heart Rate',      unit: 'bpm',   normal: [60, 100],    chartMin: 45,   chartMax: 105,  decimals: 0 },
+  { key: 'spo2',     label: 'SpO₂',            unit: '%',     normal: [95, 100],    chartMin: 93,   chartMax: 101,  decimals: 0 },
+  { key: 'rr',       label: 'Respiratory Rate',unit: 'br/min',normal: [12, 20],     chartMin: 8,    chartMax: 24,   decimals: 0 },
+  { key: 'glucose',  label: 'Blood Glucose',   unit: 'mmol/L',normal: [3.9, 7.8],   chartMin: 3.0,  chartMax: 10.0, decimals: 1 }
+];
+
+var rows = []; // each row: { datetime, temp, sys, dia, hr, spo2, rr, glucose }
+
+// =====================================================
+// ROW MANAGEMENT
+// =====================================================
+function addRow(data) {
+  var d = data || {
+    datetime: '',
+    temp: '', sys: '', dia: '', hr: '', spo2: '', rr: '', glucose: ''
+  };
+  rows.push(d);
+  renderTable();
+  renderAll();
+  autoSave();
+}
+
+function removeRow(idx) {
+  rows.splice(idx, 1);
+  renderTable();
+  renderAll();
+  autoSave();
+}
+
+function updateRow(idx, field, value) {
+  rows[idx][field] = value;
+  renderAll();
+  // Update just the row's status class
+  var tr = document.querySelectorAll('#logBody tr')[idx];
+  if (tr) {
+    var status = rowStatus(rows[idx]);
+    tr.className = status === 'High' ? 'high' : status === 'Low' ? 'low' : '';
+    var cell = tr.querySelector('.status-cell');
+    if (cell) cell.textContent = status;
+  }
+  autoSave();
+}
+
+function clearAll() {
+  if (!confirm('Clear all readings? This cannot be undone.')) return;
+  rows = [];
+  renderTable();
+  renderAll();
+  autoSave();
+}
+
+function rowStatus(r) {
+  var sys = parseFloat(r.sys), dia = parseFloat(r.dia);
+  var spo2 = parseFloat(r.spo2), glu = parseFloat(r.glucose), hr = parseFloat(r.hr);
+  if ((sys && sys > 135) || (dia && dia > 85) || (spo2 && spo2 < 97) || (glu && glu > 7.8)) return 'High';
+  if ((hr && hr < 60) || (glu && glu < 4.0)) return 'Low';
+  return 'Normal';
+}
+
+// =====================================================
+// TABLE RENDERING
+// =====================================================
+function renderTable() {
+  var tbody = document.getElementById('logBody');
+  tbody.innerHTML = '';
+  document.getElementById('emptyState').style.display = rows.length === 0 ? 'block' : 'none';
+  document.getElementById('rowInfo').textContent = rows.length + (rows.length === 1 ? ' reading' : ' readings');
+
+  rows.forEach(function(r, i) {
+    var status = rowStatus(r);
+    var tr = document.createElement('tr');
+    tr.className = status === 'High' ? 'high' : status === 'Low' ? 'low' : '';
+    tr.innerHTML =
+      '<td><input type="datetime-local" value="' + esc(r.datetime) + '" oninput="updateRow(' + i + ',\'datetime\',this.value)"></td>' +
+      '<td><input type="number" step="0.1" value="' + esc(r.temp) + '" oninput="updateRow(' + i + ',\'temp\',this.value)"></td>' +
+      '<td><input type="text" value="' + esc(formatBP(r.sys, r.dia)) + '" oninput="parseBP(' + i + ',this.value)" placeholder="120/80"></td>' +
+      '<td><input type="number" value="' + esc(r.hr) + '" oninput="updateRow(' + i + ',\'hr\',this.value)"></td>' +
+      '<td><input type="number" value="' + esc(r.spo2) + '" oninput="updateRow(' + i + ',\'spo2\',this.value)"></td>' +
+      '<td><input type="number" value="' + esc(r.rr) + '" oninput="updateRow(' + i + ',\'rr\',this.value)"></td>' +
+      '<td><input type="number" step="0.1" value="' + esc(r.glucose) + '" oninput="updateRow(' + i + ',\'glucose\',this.value)"></td>' +
+      '<td class="status-cell">' + status + '</td>' +
+      '<td><button class="row-remove" onclick="removeRow(' + i + ')" title="Remove">&times;</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function formatBP(sys, dia) {
+  if (!sys && !dia) return '';
+  return (sys || '') + '/' + (dia || '');
+}
+function parseBP(idx, value) {
+  var parts = value.split('/');
+  rows[idx].sys = parts[0] ? parts[0].trim() : '';
+  rows[idx].dia = parts[1] ? parts[1].trim() : '';
+  renderAll();
+  // Update row status class
+  var tr = document.querySelectorAll('#logBody tr')[idx];
+  if (tr) {
+    var status = rowStatus(rows[idx]);
+    tr.className = status === 'High' ? 'high' : status === 'Low' ? 'low' : '';
+    var cell = tr.querySelector('.status-cell');
+    if (cell) cell.textContent = status;
+  }
+  autoSave();
+}
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+// =====================================================
+// STATS CALCULATIONS
+// =====================================================
+function getMorningEvening(rows, key) {
+  var morning = [], evening = [];
+  rows.forEach(function(r) {
+    var v = parseFloat(r[key]);
+    if (isNaN(v)) return;
+    if (!r.datetime) return;
+    var h = parseInt(r.datetime.substr(11, 2), 10);
+    if (h < 12) morning.push(v);
+    else evening.push(v);
+  });
+  return { morning: morning, evening: evening };
+}
+
+function getAll(rows, key) {
+  return rows.map(function(r) { return parseFloat(r[key]); }).filter(function(v) { return !isNaN(v); });
+}
+
+function avg(arr) { if (arr.length === 0) return null; return arr.reduce(function(a,b){return a+b;},0) / arr.length; }
+function median(arr) {
+  if (arr.length === 0) return null;
+  var s = arr.slice().sort(function(a,b){return a-b;});
+  var mid = Math.floor(s.length/2);
+  return s.length % 2 ? s[mid] : (s[mid-1]+s[mid])/2;
+}
+function stdev(arr) {
+  if (arr.length < 2) return 0;
+  var m = avg(arr);
+  return Math.sqrt(arr.reduce(function(a,b){return a+Math.pow(b-m,2);},0) / (arr.length-1));
+}
+
+function fmt(v, dec) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return v.toFixed(dec);
+}
+
+// =====================================================
+// SUMMARY CARDS
+// =====================================================
+function renderSummary() {
+  var grid = document.getElementById('summaryGrid');
+  var cards = [];
+
+  var temps = getAll(rows, 'temp');
+  cards.push({ label: 'Avg Temperature', value: fmt(avg(temps), 1), unit: '°C', sub: temps.length ? 'Range ' + fmt(Math.min.apply(null,temps),1) + ' – ' + fmt(Math.max.apply(null,temps),1) + ' °C' : '—' });
+
+  var sys = getAll(rows, 'sys'), dia = getAll(rows, 'dia');
+  cards.push({ label: 'Avg Blood Pressure', value: fmt(avg(sys),0) + '/' + fmt(avg(dia),0), unit: 'mmHg', sub: '' });
+
+  var hr = getAll(rows, 'hr');
+  cards.push({ label: 'Avg Heart Rate', value: fmt(avg(hr),0), unit: 'bpm', sub: hr.length ? 'Range ' + fmt(Math.min.apply(null,hr),0) + ' – ' + fmt(Math.max.apply(null,hr),0) + ' bpm' : '—' });
+
+  var spo2 = getAll(rows, 'spo2');
+  cards.push({ label: 'Avg SpO₂', value: fmt(avg(spo2),1), unit: '%', sub: spo2.length ? 'Min recorded ' + fmt(Math.min.apply(null,spo2),0) + '%' : '—' });
+
+  var glu = getAll(rows, 'glucose');
+  cards.push({ label: 'Avg Glucose', value: fmt(avg(glu),1), unit: 'mmol/L', sub: glu.length ? 'Range ' + fmt(Math.min.apply(null,glu),1) + ' – ' + fmt(Math.max.apply(null,glu),1) : '—' });
+
+  cards.push({ label: 'Total Readings', value: rows.length, unit: '', sub: rows.length + ' entries logged' });
+
+  grid.innerHTML = cards.map(function(c) {
+    return '<div class="summary-card"><div class="label">' + c.label + '</div><div class="value">' + c.value + '<span class="unit">' + c.unit + '</span></div><div class="sub">' + c.sub + '</div></div>';
+  }).join('');
+}
+
+// =====================================================
+// STATS TABLE
+// =====================================================
+function renderStatsTable() {
+  var tbody = document.querySelector('#statsTable tbody');
+  tbody.innerHTML = '';
+  VITALS.forEach(function(v) {
+    var me = getMorningEvening(rows, v.key);
+    var all = getAll(rows, v.key);
+    var min = all.length ? Math.min.apply(null, all) : null;
+    var max = all.length ? Math.max.apply(null, all) : null;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="vital-name">' + v.label + '</td>' +
+      '<td>' + fmt(avg(me.morning), v.decimals) + '</td>' +
+      '<td>' + fmt(avg(me.evening), v.decimals) + '</td>' +
+      '<td>' + fmt(avg(all), v.decimals) + '</td>' +
+      '<td>' + fmt(min, v.decimals) + '</td>' +
+      '<td>' + fmt(max, v.decimals) + '</td>' +
+      '<td>' + fmt(stdev(all), v.decimals === 0 ? 0 : v.decimals) + '</td>' +
+      '<td>' + v.normal[0] + ' – ' + v.normal[1] + '</td>' +
+      '<td>' + v.unit + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// =====================================================
+// CHARTS
+// =====================================================
+function renderCharts() {
+  var area = document.getElementById('chartsArea');
+  area.innerHTML = '';
+  VITALS.forEach(function(v) {
+    var block = document.createElement('div');
+    block.className = 'chart-block';
+    block.innerHTML =
+      '<div class="chart-title">' + v.label + ' (' + v.unit + ')</div>' +
+      '<div class="chart-pair">' +
+        '<div class="chart-row"><canvas id="ch_' + v.key + '_m"></canvas><div class="chart-label">Morning · 8 am<span class="median" id="md_' + v.key + '_m">—</span></div></div>' +
+        '<div class="chart-row"><canvas id="ch_' + v.key + '_e"></canvas><div class="chart-label">Evening · 8 pm<span class="median" id="md_' + v.key + '_e">—</span></div></div>' +
+      '</div>';
+    area.appendChild(block);
+    drawChart('ch_' + v.key + '_m', 'md_' + v.key + '_m', v, 'morning');
+    drawChart('ch_' + v.key + '_e', 'md_' + v.key + '_e', v, 'evening');
+  });
+}
+
+function drawChart(canvasId, medianId, vital, period) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var w = rect.width, h = rect.height;
+  var padL = 30, padR = 8, padT = 6, padB = 14;
+  var plotW = w - padL - padR;
+  var plotH = h - padT - padB;
+
+  // Background
+  ctx.fillStyle = '#FAFAF6';
+  ctx.fillRect(padL, padT, plotW, plotH);
+
+  // Get data points (filtered by morning/evening)
+  var points = [];
+  rows.forEach(function(r) {
+    if (!r.datetime) return;
+    var v = parseFloat(r[vital.key]);
+    if (isNaN(v)) return;
+    var h_ = parseInt(r.datetime.substr(11, 2), 10);
+    if (period === 'morning' && h_ >= 12) return;
+    if (period === 'evening' && h_ < 12) return;
+    points.push({ datetime: r.datetime, value: v });
+  });
+  // Sort by datetime
+  points.sort(function(a,b){ return a.datetime.localeCompare(b.datetime); });
+
+  // Determine axis range
+  var yMin = vital.chartMin, yMax = vital.chartMax;
+  if (points.length) {
+    points.forEach(function(p) {
+      if (p.value < yMin) yMin = p.value;
+      if (p.value > yMax) yMax = p.value;
+    });
+  }
+  var yRange = yMax - yMin || 1;
+
+  function yToPx(val) {
+    return padT + plotH - ((val - yMin) / yRange) * plotH;
+  }
+
+  // Normal range band
+  var normTop = yToPx(Math.min(vital.normal[1], yMax));
+  var normBot = yToPx(Math.max(vital.normal[0], yMin));
+  ctx.fillStyle = 'rgba(196,206,188,0.45)';
+  ctx.fillRect(padL, normTop, plotW, normBot - normTop);
+
+  // Border
+  ctx.strokeStyle = '#D4DDD8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(padL + 0.5, padT + 0.5, plotW - 1, plotH - 1);
+
+  // Y axis labels
+  ctx.fillStyle = '#7A9494';
+  ctx.font = '9px Inter, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(vital.chartMax.toString(), padL - 4, padT + 8);
+  var midVal = ((vital.chartMin + vital.chartMax) / 2);
+  ctx.fillText(vital.decimals ? midVal.toFixed(1) : Math.round(midVal).toString(), padL - 4, padT + plotH/2);
+  ctx.fillText(vital.chartMin.toString(), padL - 4, padT + plotH - 6);
+
+  // Data line
+  if (points.length === 0) {
+    ctx.fillStyle = '#B0C4C0';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('No ' + period + ' data', padL + plotW/2, padT + plotH/2);
+    document.getElementById(medianId).textContent = '—';
+    return;
+  }
+
+  var color = period === 'morning' ? '#2E7D6B' : '#C7572A';
+
+  // Median line (dashed)
+  var med = median(points.map(function(p){return p.value;}));
+  if (med !== null) {
+    var medY = yToPx(med);
+    ctx.strokeStyle = '#E89F4A';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padL, medY);
+    ctx.lineTo(padL + plotW, medY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    document.getElementById(medianId).textContent = 'median ' + (vital.decimals ? med.toFixed(1) : Math.round(med));
+  }
+
+  // Data line
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  points.forEach(function(p, i) {
+    var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
+    var y = yToPx(p.value);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Dots
+  ctx.fillStyle = color;
+  points.forEach(function(p, i) {
+    var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
+    var y = yToPx(p.value);
+    ctx.beginPath();
+    ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+// =====================================================
+// MAIN RENDER
+// =====================================================
+function renderAll() {
+  renderSummary();
+  renderStatsTable();
+  renderCharts();
+}
+
+// =====================================================
+// PERSISTENCE
+// =====================================================
+var saveTimeout;
+function autoSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(function() {
+    var meta = {};
+    document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
+      meta['m' + i] = el.textContent;
+    });
+    try {
+      localStorage.setItem('whtalife_vitals', JSON.stringify({ rows: rows, meta: meta }));
+      var ind = document.getElementById('saveIndicator');
+      ind.classList.add('show');
+      setTimeout(function() { ind.classList.remove('show'); }, 1200);
+    } catch(e) {}
+  }, 400);
+}
+
+function loadSaved() {
+  try {
+    var raw = localStorage.getItem('whtalife_vitals');
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    if (data.rows) rows = data.rows;
+    if (data.meta) {
+      var fields = document.querySelectorAll('.meta-row [contenteditable]');
+      Object.keys(data.meta).forEach(function(k) {
+        var idx = parseInt(k.substr(1), 10);
+        if (fields[idx]) fields[idx].textContent = data.meta[k];
+      });
+    }
+  } catch(e) { console.error('Load error:', e); }
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.hasAttribute('contenteditable')) autoSave();
+});
+
+function downloadPDF() {
+  setTimeout(function() { window.print(); }, 100);
+}
+
+// Set generation date
+document.getElementById('genDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+// Init
+loadSaved();
+renderTable();
+renderAll();
+
+// Re-render charts on resize
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderCharts, 200);
+});
+</script>
+
+</body>
+</html>
