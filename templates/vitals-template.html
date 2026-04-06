@@ -419,6 +419,7 @@
 
   <div class="log-toolbar">
     <div class="info" id="rowInfo">0 readings</div>
+    <button class="clear-btn" onclick="loadSample()">Load Sample Data</button>
     <button class="clear-btn" onclick="clearAll()">Clear All</button>
     <button class="add-row-btn" onclick="addRow()">+ Add Reading</button>
   </div>
@@ -506,6 +507,30 @@ function updateRow(idx, field, value) {
     var cell = tr.querySelector('.status-cell');
     if (cell) cell.textContent = status;
   }
+  autoSave();
+}
+
+function loadSample() {
+  var sample = [
+    { datetime: '2024-11-15T08:00', temp: '36.7', sys: '127', dia: '78', hr: '70', spo2: '97', rr: '15', glucose: '5.3' },
+    { datetime: '2024-11-16T08:00', temp: '37.3', sys: '122', dia: '69', hr: '86', spo2: '99', rr: '17', glucose: '6.0' },
+    { datetime: '2024-11-17T08:00', temp: '37.2', sys: '128', dia: '71', hr: '60', spo2: '98', rr: '14', glucose: '5.2' },
+    { datetime: '2024-11-18T08:00', temp: '36.9', sys: '125', dia: '77', hr: '75', spo2: '99', rr: '19', glucose: '5.4' },
+    { datetime: '2024-11-19T08:00', temp: '37.1', sys: '125', dia: '71', hr: '65', spo2: '98', rr: '16', glucose: '5.6' },
+    { datetime: '2024-11-20T08:00', temp: '36.5', sys: '130', dia: '74', hr: '80', spo2: '99', rr: '19', glucose: '6.2' },
+    { datetime: '2024-11-21T08:00', temp: '36.7', sys: '122', dia: '84', hr: '82', spo2: '99', rr: '19', glucose: '5.9' },
+    { datetime: '2024-11-22T08:00', temp: '36.8', sys: '118', dia: '71', hr: '60', spo2: '99', rr: '13', glucose: '6.0' },
+    { datetime: '2024-11-23T08:00', temp: '37.1', sys: '133', dia: '71', hr: '71', spo2: '98', rr: '17', glucose: '5.1' },
+    { datetime: '2024-11-24T08:00', temp: '36.8', sys: '137', dia: '88', hr: '72', spo2: '97', rr: '15', glucose: '5.6' },
+    { datetime: '2024-11-25T08:00', temp: '37.2', sys: '134', dia: '74', hr: '81', spo2: '97', rr: '19', glucose: '4.9' },
+    { datetime: '2024-11-26T08:00', temp: '37.3', sys: '122', dia: '69', hr: '86', spo2: '99', rr: '17', glucose: '6.0' },
+    { datetime: '2024-11-27T08:00', temp: '36.7', sys: '134', dia: '79', hr: '80', spo2: '98', rr: '13', glucose: '5.2' },
+    { datetime: '2024-11-28T08:00', temp: '36.9', sys: '118', dia: '71', hr: '71', spo2: '98', rr: '14', glucose: '5.4' },
+    { datetime: '2024-11-29T08:00', temp: '36.8', sys: '129', dia: '88', hr: '66', spo2: '96', rr: '18', glucose: '5.3' }
+  ];
+  rows = sample;
+  renderTable();
+  renderAll();
   autoSave();
 }
 
