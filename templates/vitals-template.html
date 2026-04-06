@@ -370,20 +370,20 @@
 
   <div class="meta-row">
     <div>
-      <div class="label">Client</div>
-      <div class="value" contenteditable="true">Client Name</div>
+      <div class="label">Patient</div>
+      <div class="value" contenteditable="true">Patient Name</div>
     </div>
     <div>
       <div class="label">Period Start</div>
-      <div class="value" contenteditable="true">September 01, 2024</div>
+      <div class="value" contenteditable="true">Start Date</div>
     </div>
     <div>
       <div class="label">Period End</div>
-      <div class="value" contenteditable="true">November 29, 2024</div>
+      <div class="value" contenteditable="true">End Date</div>
     </div>
     <div>
-      <div class="label">Generated</div>
-      <div class="value" id="genDate">—</div>
+      <div class="label">Date</div>
+      <div class="value" contenteditable="true">Date</div>
     </div>
   </div>
 
@@ -894,7 +894,6 @@ function downloadPDF() {
 }
 
 // Set generation date
-document.getElementById('genDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 // Init
 loadSaved();
