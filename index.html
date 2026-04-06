@@ -10,8 +10,8 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
   .container { max-width: 480px; width: 100%; text-align: center; }
-  .logo-mark { width: 70px; height: 70px; margin: 0 auto 1rem; background: var(--aegean-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-  .logo-mark svg { width: 40px; height: 40px; }
+  .logo-mark { width: 90px; height: 90px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; }
+  .logo-mark svg { width: 90px; height: 90px; }
   .brand { font-family: 'Lora', serif; font-size: 2rem; font-weight: 700; color: var(--aegean-dark); letter-spacing: 0.5px; }
   .tagline { font-size: 0.85rem; color: var(--text-light); margin-top: 0.25rem; }
   .cards { margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem; }
@@ -31,29 +31,17 @@
 <body>
 <div class="container">
   <div class="logo-mark">
-    <svg viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <!-- Top heart petal -->
-      <path d="M100 72 C100 72, 88 42, 78 38 C68 34, 60 40, 60 50 C60 62, 72 72, 100 82" stroke="white" stroke-width="4.5" fill="none"/>
-      <path d="M100 72 C100 72, 112 42, 122 38 C132 34, 140 40, 140 50 C140 62, 128 72, 100 82" stroke="white" stroke-width="4.5" fill="none"/>
-      <!-- Right upper lobe -->
-      <path d="M108 88 C120 78, 142 72, 154 76 C166 80, 168 92, 160 102 C152 112, 134 112, 112 100" stroke="white" stroke-width="4.5" fill="none"/>
-      <!-- Right lower lobe -->
-      <path d="M112 100 C132 108, 152 116, 158 128 C164 140, 156 154, 142 158 C128 162, 112 148, 104 124" stroke="white" stroke-width="4.5" fill="none"/>
-      <!-- Left upper lobe -->
-      <path d="M92 88 C80 78, 58 72, 46 76 C34 80, 32 92, 40 102 C48 112, 66 112, 88 100" stroke="white" stroke-width="4.5" fill="none"/>
-      <!-- Left lower lobe -->
-      <path d="M88 100 C68 108, 48 116, 42 128 C36 140, 44 154, 58 158 C72 162, 88 148, 96 124" stroke="white" stroke-width="4.5" fill="none"/>
-      <!-- Center filled dot -->
-      <circle cx="100" cy="86" r="5" fill="white" stroke="none"/>
-      <!-- Small horizontal wings -->
-      <path d="M90 92 L80 89 L90 95" stroke="white" stroke-width="2.5" fill="none"/>
-      <path d="M110 92 L120 89 L110 95" stroke="white" stroke-width="2.5" fill="none"/>
-      <!-- Vertical staff -->
-      <line x1="100" y1="92" x2="100" y2="290" stroke="white" stroke-width="3.5"/>
-      <!-- Snake body wrapping around staff -->
-      <path d="M100 115 C88 120, 82 135, 92 145 C102 155, 108 148, 100 158 C88 170, 82 182, 94 192 C106 202, 112 195, 100 208 C88 220, 84 232, 94 240 C104 248, 108 242, 100 252" stroke="white" stroke-width="5" fill="none"/>
-      <!-- Wavy tail -->
-      <path d="M100 290 C104 296, 106 304, 102 310 C98 316, 96 322, 98 330" stroke="white" stroke-width="2.5" fill="none"/>
+    <svg viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#5A8282" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M100 70 C100 60, 90 40, 78 40 C68 40, 60 48, 60 60 C60 75, 78 85, 100 90 C122 85, 140 75, 140 60 C140 48, 132 40, 122 40 C110 40, 100 60, 100 70 Z"/>
+      <path d="M85 95 C75 95, 55 88, 42 92 C28 96, 22 110, 30 122 C40 138, 65 142, 88 130 C90 125, 92 115, 88 105 C90 98, 88 95, 85 95 Z"/>
+      <path d="M115 95 C125 95, 145 88, 158 92 C172 96, 178 110, 170 122 C160 138, 135 142, 112 130 C110 125, 108 115, 112 105 C110 98, 112 95, 115 95 Z"/>
+      <path d="M85 130 C75 132, 58 142, 52 158 C46 174, 56 188, 72 188 C88 188, 100 175, 100 160 C100 175, 112 188, 128 188 C144 188, 154 174, 148 158 C142 142, 125 132, 115 130 C108 138, 100 145, 100 155 C100 145, 92 138, 85 130 Z"/>
+      <circle cx="100" cy="78" r="5" fill="#5A8282" stroke="none"/>
+      <line x1="100" y1="84" x2="100" y2="220" stroke-width="3"/>
+      <path d="M100 100 C92 96, 82 98, 78 104" stroke-width="2.5"/>
+      <path d="M100 100 C108 96, 118 98, 122 104" stroke-width="2.5"/>
+      <path d="M100 115 C90 118, 88 128, 100 132 C112 136, 110 146, 100 150 C90 154, 88 164, 100 168 C112 172, 110 182, 100 186 C90 190, 88 200, 100 204" stroke-width="3" fill="none"/>
+      <path d="M100 220 C104 230, 96 238, 100 248 C104 258, 96 264, 98 272" stroke-width="2.5" fill="none"/>
     </svg>
   </div>
   <div class="brand">WhtaLife</div>
