@@ -767,8 +767,19 @@ function drawChart(canvasId, medianId, vital) {
   // Normal range band
   var normTop = yToPx(Math.min(vital.normal[1], yMax));
   var normBot = yToPx(Math.max(vital.normal[0], yMin));
-  ctx.fillStyle = 'rgba(196,206,188,0.45)';
+  ctx.fillStyle = 'rgba(106,168,79,0.28)';
   ctx.fillRect(padL, normTop, plotW, normBot - normTop);
+  // Top and bottom border lines for the normal range
+  ctx.strokeStyle = 'rgba(74,138,57,0.55)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(padL, normTop);
+  ctx.lineTo(padL + plotW, normTop);
+  ctx.moveTo(padL, normBot);
+  ctx.lineTo(padL + plotW, normBot);
+  ctx.stroke();
+  ctx.setLineDash([]);
 
   // Border
   ctx.strokeStyle = '#D4DDD8';
