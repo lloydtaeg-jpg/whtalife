@@ -949,6 +949,26 @@ function drawChart(test, color) {
     ctx.fill();
     ctx.stroke();
   });
+
+  // Value labels above each dot
+  ctx.fillStyle = lineColor;
+  ctx.font = '600 10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  points.forEach(function(p, i) {
+    var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
+    var y = yToPx(p.value);
+    var label = fmt(p.value, test.dec);
+    // Position label above the dot, but flip below if too close to top
+    var labelY = y - 8;
+    if (labelY < padT + 12) labelY = y + 18;
+    // Draw a subtle white outline so the label stays readable over the green band
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 3;
+    ctx.strokeText(label, x, labelY);
+    ctx.fillStyle = lineColor;
+    ctx.fillText(label, x, labelY);
+  });
 }
 
 // =====================================================

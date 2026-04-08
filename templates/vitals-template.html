@@ -850,6 +850,23 @@ function drawChart(canvasId, medianId, vital) {
     ctx.fill();
     ctx.stroke();
   });
+
+  // Value labels above each dot
+  ctx.font = '600 10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  points.forEach(function(p, i) {
+    var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
+    var y = yToPx(p.value);
+    var label = vital.decimals ? p.value.toFixed(vital.decimals) : Math.round(p.value).toString();
+    var labelY = y - 8;
+    if (labelY < padT + 12) labelY = y + 18;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 3;
+    ctx.strokeText(label, x, labelY);
+    ctx.fillStyle = color;
+    ctx.fillText(label, x, labelY);
+  });
 }
 
 // =====================================================
