@@ -423,6 +423,7 @@
 
   <div class="toolbar-row">
     <div class="info" id="resultInfo">0 results entered</div>
+    <button class="clear-btn" onclick="loadPatientData()">Load Patient Data</button>
     <button class="clear-btn" onclick="loadSample()">Load Sample Data</button>
     <button class="clear-btn" onclick="clearAll()">Clear All</button>
   </div>
@@ -475,7 +476,8 @@ var PANELS = [
       { key: 'hco3',   label: 'Bicarbonate',  unit: 'mmol/L',  range: [22, 29],   chartMin: 15,  chartMax: 35,  dec: 0 },
       { key: 'bun',    label: 'BUN',          unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
       { key: 'cr',     label: 'Creatinine',   unit: 'μmol/L',  range: [62, 106],  chartMin: 40,  chartMax: 200, dec: 0 },
-      { key: 'egfr',   label: 'eGFR',         unit: 'mL/min/1.73m²', range: [60, 120], chartMin: 0, chartMax: 120, dec: 0 }
+      { key: 'egfr',   label: 'eGFR',         unit: 'mL/min/1.73m²', range: [60, 120], chartMin: 0, chartMax: 120, dec: 0 },
+      { key: 'ca',     label: 'Calcium',      unit: 'mmol/L',  range: [2.10, 2.55], chartMin: 1.8, chartMax: 3.0, dec: 2 }
     ]
   },
   {
@@ -486,7 +488,8 @@ var PANELS = [
       { key: 'ast',    label: 'AST',          unit: 'U/L',     range: [10, 40],   chartMin: 0, chartMax: 120, dec: 0 },
       { key: 'alp',    label: 'ALP',          unit: 'U/L',     range: [40, 130],  chartMin: 20, chartMax: 250, dec: 0 },
       { key: 'bili',   label: 'Bilirubin',    unit: 'μmol/L',  range: [3, 17],    chartMin: 0, chartMax: 35, dec: 0 },
-      { key: 'alb',    label: 'Albumin',      unit: 'g/L',     range: [35, 50],   chartMin: 20, chartMax: 60, dec: 0 }
+      { key: 'alb',    label: 'Albumin',      unit: 'g/L',     range: [35, 50],   chartMin: 20, chartMax: 60, dec: 0 },
+      { key: 'tp',     label: 'Total Protein', unit: 'g/L',    range: [60, 80],   chartMin: 40, chartMax: 100, dec: 0 }
     ]
   },
   {
@@ -642,6 +645,38 @@ function removeResult(idx) {
 function clearAll() {
   if (!confirm('Clear all results? This cannot be undone.')) return;
   results = [];
+  renderAll();
+  autoSave();
+}
+
+function loadPatientData() {
+  // Data from Medical hx May 16 lab table
+  // US units in source converted to Canadian metric
+  var data = [
+    // TSH (mIU/L)
+    { date: '2025-05-14', testKey: 'tsh', value: 1.06, notes: '' },
+    { date: '2025-02-12', testKey: 'tsh', value: 0.83, notes: '' },
+    { date: '2025-02-03', testKey: 'tsh', value: 1.0,  notes: '' },
+    // HbA1c (%)
+    { date: '2025-05-14', testKey: 'a1c', value: 8.4, notes: 'Above target' },
+    { date: '2025-02-12', testKey: 'a1c', value: 7.8, notes: 'Above target' },
+    { date: '2025-02-03', testKey: 'a1c', value: 8.4, notes: 'Above target' },
+    // Calcium (converted from 9.8 mg/dL → 2.45 mmol/L, 9.7 → 2.42)
+    { date: '2025-02-03', testKey: 'ca', value: 2.45, notes: 'Converted from 9.8 mg/dL' },
+    { date: '2024-11-26', testKey: 'ca', value: 2.42, notes: 'Converted from 9.7 mg/dL' },
+    // Albumin (converted from g/dL → g/L)
+    { date: '2025-02-03', testKey: 'alb', value: 45, notes: 'Converted from 4.5 g/dL' },
+    { date: '2024-11-26', testKey: 'alb', value: 42, notes: 'Converted from 4.2 g/dL' },
+    // Total Protein (converted from g/dL → g/L)
+    { date: '2025-02-03', testKey: 'tp', value: 73, notes: 'Converted from 7.3 g/dL' },
+    // Bilirubin (μmol/L)
+    { date: '2025-02-12', testKey: 'bili', value: 7,   notes: '' },
+    { date: '2025-02-03', testKey: 'bili', value: 6.8, notes: '' },
+    // ALP (U/L)
+    { date: '2025-05-14', testKey: 'alp', value: 134, notes: 'Above range' },
+    { date: '2025-02-12', testKey: 'alp', value: 147, notes: 'Above range' }
+  ];
+  results = data;
   renderAll();
   autoSave();
 }
