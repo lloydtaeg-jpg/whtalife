@@ -175,9 +175,24 @@
     font-weight: 600;
   }
   canvas.chart {
-    width: 100%; height: 130px;
+    width: 100%; height: 170px;
     border-radius: 4px;
   }
+  .test-block.collapsed .results-table { display: none; }
+  .test-toggle {
+    background: none; border: 1px solid var(--border);
+    color: var(--text-light);
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .test-toggle:hover { color: var(--panel-color, var(--aegean-dark)); border-color: var(--panel-color, var(--aegean)); }
+  .test-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+  .test-block.collapsed .test-toggle .arrow { transform: rotate(-90deg); }
   .median-label {
     font-size: 0.65rem;
     color: var(--text-light);
@@ -337,10 +352,11 @@
 
   @media print {
     body { background: white; font-size: 10px; }
-    .action-bar, .add-result-btn, .clear-btn, .row-remove, .save-indicator, .entry-form, .panel-toggle { display: none !important; }
+    .action-bar, .add-result-btn, .clear-btn, .row-remove, .save-indicator, .entry-form, .panel-toggle, .test-toggle { display: none !important; }
     .panel { page-break-inside: avoid; border-color: #ccc !important; }
     [contenteditable] { border-bottom: none !important; }
     .panel.collapsed .panel-body { display: block !important; }
+    .test-block.collapsed .results-table { display: table !important; }
   }
   @media (max-width: 800px) {
     .container { padding: 0.75rem; }
@@ -771,12 +787,13 @@ function renderPanels() {
         var latest = testResults[testResults.length-1];
         var status = statusOf(latest.value, test.range);
 
-        bodyHtml += '<div class="test-block">';
+        bodyHtml += '<div class="test-block collapsed">';
         bodyHtml += '<div class="test-row">';
         bodyHtml += '<div class="test-info">';
         bodyHtml += '<div class="test-name">' + test.label + ' <span style="color:var(--text-light);font-weight:400;">(' + test.unit + ')</span></div>';
         bodyHtml += '<div class="test-meta">Reference: ' + test.range[0] + ' – ' + test.range[1] + ' ' + test.unit + ' · Latest: <span class="latest">' + fmt(latest.value, test.dec) + '</span> on ' + formatDate(latest.date) + ' · ' + status + '</div>';
         bodyHtml += '<canvas class="chart" id="lab_' + test.key + '"></canvas>';
+        bodyHtml += '<button class="test-toggle" onclick="this.closest(\'.test-block\').classList.toggle(\'collapsed\')"><span class="arrow">▾</span> Show ' + testResults.length + ' result' + (testResults.length === 1 ? '' : 's') + '</button>';
         bodyHtml += '</div>';
         bodyHtml += '<div class="median-label" id="med_' + test.key + '">—</div>';
         bodyHtml += '</div>';
@@ -978,8 +995,9 @@ function downloadPDF() {
   var name = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Lab_Results';
   var filename = 'Lab_Results_' + name + '.pdf';
 
-  // Expand all panels for the PDF
+  // Expand all panels and test blocks for the PDF
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('collapsed'); });
+  document.querySelectorAll('.test-block').forEach(function(t) { t.classList.remove('collapsed'); });
 
   var hideEls = document.querySelectorAll('.action-bar, .add-result-btn, .clear-btn, .row-remove, .save-indicator, .entry-form, .panel-toggle');
   hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
