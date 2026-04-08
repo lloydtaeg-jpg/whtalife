@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhtaLife — Lab & Test Results Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --aegean: #6F9797;
+    --aegean-dark: #5A8282;
+    --aegean-darker: #3F6868;
+    --salisbury: #C5C9A8;
+    --spring: #C4CEBC;
+    --cream: #FAF8F2;
+    --white: #FFFFFF;
+    --text: #2C3E3E;
+    --text-mid: #4A6060;
+    --text-light: #7A9494;
+    --border: #D4DDD8;
+    --border-light: #E8EDEA;
+    --high-bg: #FCEEDD;
+    --high-text: #B86A2A;
+    --low-bg: #DCEEEC;
+    --low-text: #2A7A78;
+    --normal-line: #4A7A4A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .logo-mark {
+    width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: var(--cream);
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .logo-mark img { width: 130%; height: 130%; object-fit: contain; }
+  .header-text .brand {
+    font-family: 'Lora', serif;
+    font-size: 0.95rem; font-weight: 500; letter-spacing: 0.3px; opacity: 0.9;
+  }
+  .header-text .title {
+    font-family: 'Lora', serif;
+    font-size: 1.6rem; font-weight: 700; letter-spacing: 0.3px;
+    margin-top: 0.1rem;
+  }
+  .header-text .subtitle {
+    font-size: 0.78rem; opacity: 0.8; margin-top: 0.15rem;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
+  [contenteditable] {
+    outline: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.2s, background 0.2s;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  [contenteditable]:hover { border-bottom-color: var(--aegean); }
+  [contenteditable]:focus { border-bottom-color: var(--aegean-dark); background: rgba(111,151,151,0.06); }
+
+  .meta-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .meta-row .label { font-size: 0.65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta-row .value { font-family: 'Lora', serif; font-weight: 600; color: var(--aegean-dark); font-size: 0.85rem; margin-top: 0.1rem; }
+
+  h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.2rem; font-weight: 600;
+    color: var(--aegean-dark);
+    margin: 1.75rem 0 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-desc {
+    font-size: 0.78rem; color: var(--text-mid);
+    margin-bottom: 1rem;
+  }
+
+  /* Panel block */
+  .panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--aegean);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 0.75rem 1rem;
+    background: var(--cream);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .panel-title {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--aegean-dark);
+  }
+  .panel-count {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-left: 0.5rem;
+    font-weight: 500;
+  }
+  .panel-toggle {
+    width: 16px; height: 16px;
+    color: var(--text-light);
+    transition: transform 0.2s;
+  }
+  .panel.collapsed .panel-toggle { transform: rotate(-90deg); }
+  .panel-body {
+    padding: 1rem;
+    display: block;
+  }
+  .panel.collapsed .panel-body { display: none; }
+
+  .test-block {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px dashed var(--border-light);
+  }
+  .test-block:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .test-row {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    gap: 1rem;
+    align-items: center;
+  }
+  .test-info { min-width: 0; }
+  .test-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 0.15rem;
+  }
+  .test-meta {
+    font-size: 0.7rem;
+    color: var(--text-light);
+  }
+  .test-meta .latest {
+    color: var(--aegean-dark);
+    font-weight: 600;
+  }
+  canvas.chart {
+    width: 100%; height: 70px;
+    border-radius: 4px;
+  }
+  .median-label {
+    font-size: 0.65rem;
+    color: var(--text-light);
+    text-align: right;
+  }
+
+  /* Entry form */
+  .entry-form {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .entry-form h3 {
+    font-family: 'Lora', serif;
+    font-size: 0.9rem;
+    color: var(--aegean-dark);
+    margin-bottom: 0.75rem;
+  }
+  .entry-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 0.8fr 1fr auto;
+    gap: 0.5rem;
+    align-items: end;
+  }
+  .field { display: flex; flex-direction: column; gap: 0.2rem; }
+  .field label {
+    font-size: 0.65rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field select, .field input {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: var(--text);
+    background: var(--white);
+  }
+  .field select:focus, .field input:focus {
+    outline: none;
+    border-color: var(--aegean);
+  }
+  .add-result-btn {
+    background: var(--aegean-dark); color: white;
+    border: none; border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem; font-weight: 500;
+    cursor: pointer;
+    height: 32px;
+  }
+  .add-result-btn:hover { background: var(--aegean); }
+
+  /* Results table */
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.76rem;
+  }
+  .results-table th {
+    background: var(--aegean-dark);
+    color: white;
+    padding: 0.55rem 0.6rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .results-table td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-mid);
+  }
+  .results-table tr:last-child td { border-bottom: none; }
+  .results-table tr.high { background: var(--high-bg); }
+  .results-table tr.high td { color: var(--high-text); }
+  .results-table tr.low { background: var(--low-bg); }
+  .results-table tr.low td { color: var(--low-text); }
+  .results-table .row-remove {
+    background: none; border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    width: 22px; height: 22px;
+    border-radius: 3px;
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+  .results-table .row-remove:hover { background: rgba(184,106,42,0.15); color: var(--high-text); }
+  .results-table .status-cell { font-weight: 600; font-size: 0.7rem; }
+
+  .empty-msg {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    font-style: italic;
+  }
+
+  .toolbar-row {
+    display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;
+  }
+  .toolbar-row .info { font-size: 0.7rem; color: var(--text-light); flex: 1; }
+  .clear-btn {
+    background: none; color: var(--text-light);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem; font-weight: 500;
+    cursor: pointer;
+  }
+  .clear-btn:hover { color: var(--high-text); border-color: var(--high-text); }
+
+  /* Action bar */
+  .action-bar {
+    position: fixed; bottom: 1.25rem; right: 1.25rem;
+    display: flex; gap: 0.5rem; z-index: 100;
+  }
+  .action-btn {
+    background: var(--aegean-dark); color: white; border: none;
+    height: 38px; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    padding: 0 0.85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 500;
+  }
+  .action-btn:hover { background: var(--aegean); }
+  .action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .save-indicator {
+    position: fixed; top: 1rem; right: 1rem;
+    font-size: 0.7rem; color: #4A7A4A;
+    background: #E5EDE5;
+    padding: 0.3rem 0.7rem; border-radius: 4px;
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 100; pointer-events: none;
+  }
+  .save-indicator.show { opacity: 1; }
+
+  .footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media print {
+    body { background: white; font-size: 10px; }
+    .action-bar, .add-result-btn, .clear-btn, .row-remove, .save-indicator, .entry-form, .panel-toggle { display: none !important; }
+    .panel { page-break-inside: avoid; border-color: #ccc !important; }
+    [contenteditable] { border-bottom: none !important; }
+    .panel.collapsed .panel-body { display: block !important; }
+  }
+  @media (max-width: 800px) {
+    .container { padding: 0.75rem; }
+    .entry-grid { grid-template-columns: 1fr 1fr; }
+    .header { padding: 1.25rem 1rem; }
+    .header-text .title { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="save-indicator" id="saveIndicator">Saved</div>
+
+<div class="header">
+  <div class="logo-mark">
+    <img src="../assets/logo.png" alt="WhtaLife logo">
+  </div>
+  <div class="header-text">
+    <div class="brand">Whtalife Private Care</div>
+    <div class="title">Lab &amp; Test Results</div>
+    <div class="subtitle">Confidential clinical reference document</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="meta-row">
+    <div>
+      <div class="label">Patient</div>
+      <div class="value" contenteditable="true">Patient Name</div>
+    </div>
+    <div>
+      <div class="label">Date Range</div>
+      <div class="value" contenteditable="true">All Time</div>
+    </div>
+    <div>
+      <div class="label">Date</div>
+      <div class="value" contenteditable="true">Date</div>
+    </div>
+  </div>
+
+  <div class="entry-form">
+    <h3>Add a New Result</h3>
+    <div class="entry-grid">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="entryDate">
+      </div>
+      <div class="field">
+        <label>Test</label>
+        <select id="entryTest"><option value="">Select test…</option></select>
+      </div>
+      <div class="field">
+        <label>Value</label>
+        <input type="number" step="0.01" id="entryValue" placeholder="0.0">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input type="text" id="entryNotes" placeholder="Optional">
+      </div>
+      <button class="add-result-btn" onclick="addResult()">+ Add Result</button>
+    </div>
+  </div>
+
+  <div class="toolbar-row">
+    <div class="info" id="resultInfo">0 results entered</div>
+    <button class="clear-btn" onclick="loadSample()">Load Sample Data</button>
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
+  </div>
+
+  <h2>Results by Panel</h2>
+  <div class="section-desc">Each test panel below shows a chronological trend chart for every test that has data, followed by all entered results. The shaded green band marks the standard reference range. Click a panel header to collapse or expand it.</div>
+
+  <div id="panelsArea"><!-- panels rendered by JS --></div>
+
+  <div class="footer">
+    Report auto-generated from entered data. All data is stored locally in your browser only and is never transmitted online. Reference ranges are general adult Canadian values; consult the ordering provider for individual interpretation.
+  </div>
+
+</div>
+
+<div class="action-bar">
+  <button class="action-btn" onclick="downloadPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save as PDF
+  </button>
+  <button class="action-btn" onclick="window.print()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print
+  </button>
+</div>
+
+<script>
+// =====================================================
+// LAB PANEL DEFINITIONS (Canadian reference ranges)
+// =====================================================
+var PANELS = [
+  {
+    name: 'CBC — Complete Blood Count',
+    tests: [
+      { key: 'hgb',    label: 'Hemoglobin',   unit: 'g/L',     range: [120, 160], chartMin: 80,  chartMax: 200, dec: 0 },
+      { key: 'hct',    label: 'Hematocrit',   unit: 'L/L',     range: [0.36, 0.48], chartMin: 0.25, chartMax: 0.55, dec: 2 },
+      { key: 'wbc',    label: 'WBC',          unit: '×10⁹/L',  range: [4.0, 11.0], chartMin: 2,   chartMax: 16,  dec: 1 },
+      { key: 'plt',    label: 'Platelets',    unit: '×10⁹/L',  range: [150, 400], chartMin: 50,  chartMax: 600, dec: 0 },
+      { key: 'rbc',    label: 'RBC',          unit: '×10¹²/L', range: [4.0, 5.5], chartMin: 3,   chartMax: 7,   dec: 2 }
+    ]
+  },
+  {
+    name: 'CMP / Electrolytes',
+    tests: [
+      { key: 'na',     label: 'Sodium',       unit: 'mmol/L',  range: [135, 145], chartMin: 125, chartMax: 155, dec: 0 },
+      { key: 'k',      label: 'Potassium',    unit: 'mmol/L',  range: [3.5, 5.0], chartMin: 2.5, chartMax: 6.5, dec: 1 },
+      { key: 'cl',     label: 'Chloride',     unit: 'mmol/L',  range: [98, 107],  chartMin: 90,  chartMax: 115, dec: 0 },
+      { key: 'hco3',   label: 'Bicarbonate',  unit: 'mmol/L',  range: [22, 29],   chartMin: 15,  chartMax: 35,  dec: 0 },
+      { key: 'bun',    label: 'BUN',          unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
+      { key: 'cr',     label: 'Creatinine',   unit: 'μmol/L',  range: [62, 106],  chartMin: 40,  chartMax: 200, dec: 0 },
+      { key: 'egfr',   label: 'eGFR',         unit: 'mL/min/1.73m²', range: [60, 120], chartMin: 0, chartMax: 120, dec: 0 }
+    ]
+  },
+  {
+    name: 'Liver Function',
+    tests: [
+      { key: 'alt',    label: 'ALT',          unit: 'U/L',     range: [7, 56],    chartMin: 0, chartMax: 120, dec: 0 },
+      { key: 'ast',    label: 'AST',          unit: 'U/L',     range: [10, 40],   chartMin: 0, chartMax: 120, dec: 0 },
+      { key: 'alp',    label: 'ALP',          unit: 'U/L',     range: [40, 130],  chartMin: 20, chartMax: 250, dec: 0 },
+      { key: 'bili',   label: 'Bilirubin',    unit: 'μmol/L',  range: [3, 17],    chartMin: 0, chartMax: 35, dec: 0 },
+      { key: 'alb',    label: 'Albumin',      unit: 'g/L',     range: [35, 50],   chartMin: 20, chartMax: 60, dec: 0 }
+    ]
+  },
+  {
+    name: 'Lipid Panel',
+    tests: [
+      { key: 'tc',     label: 'Total Cholesterol', unit: 'mmol/L', range: [0, 5.2], chartMin: 2, chartMax: 8, dec: 1 },
+      { key: 'ldl',    label: 'LDL',               unit: 'mmol/L', range: [0, 3.5], chartMin: 1, chartMax: 6, dec: 1 },
+      { key: 'hdl',    label: 'HDL',               unit: 'mmol/L', range: [1.0, 2.5], chartMin: 0.5, chartMax: 3, dec: 1 },
+      { key: 'tg',     label: 'Triglycerides',     unit: 'mmol/L', range: [0, 1.7], chartMin: 0, chartMax: 4, dec: 1 },
+      { key: 'nonhdl', label: 'Non-HDL',           unit: 'mmol/L', range: [0, 4.2], chartMin: 1, chartMax: 7, dec: 1 }
+    ]
+  },
+  {
+    name: 'Diabetes',
+    tests: [
+      { key: 'a1c',    label: 'HbA1c',          unit: '%',      range: [4.0, 6.0], chartMin: 4, chartMax: 12, dec: 1 },
+      { key: 'fglu',   label: 'Fasting Glucose', unit: 'mmol/L', range: [3.9, 5.6], chartMin: 3, chartMax: 12, dec: 1 },
+      { key: 'rglu',   label: 'Random Glucose',  unit: 'mmol/L', range: [3.9, 7.8], chartMin: 3, chartMax: 15, dec: 1 }
+    ]
+  },
+  {
+    name: 'Thyroid',
+    tests: [
+      { key: 'tsh',    label: 'TSH',          unit: 'mIU/L',   range: [0.32, 4.0], chartMin: 0, chartMax: 8, dec: 2 },
+      { key: 'ft4',    label: 'Free T4',      unit: 'pmol/L',  range: [10, 25],    chartMin: 5, chartMax: 35, dec: 1 },
+      { key: 'ft3',    label: 'Free T3',      unit: 'pmol/L',  range: [3.5, 6.5],  chartMin: 2, chartMax: 9, dec: 1 }
+    ]
+  },
+  {
+    name: 'Iron Studies',
+    tests: [
+      { key: 'fer',    label: 'Ferritin',     unit: 'μg/L',    range: [15, 200], chartMin: 0, chartMax: 400, dec: 0 },
+      { key: 'iron',   label: 'Iron',         unit: 'μmol/L',  range: [10, 30],  chartMin: 5, chartMax: 40, dec: 0 },
+      { key: 'tsat',   label: 'Transferrin Saturation', unit: '%', range: [20, 50], chartMin: 5, chartMax: 60, dec: 0 }
+    ]
+  },
+  {
+    name: 'Vitamins',
+    tests: [
+      { key: 'b12',    label: 'Vitamin B12',  unit: 'pmol/L',  range: [156, 672], chartMin: 100, chartMax: 800, dec: 0 },
+      { key: 'vitd',   label: 'Vitamin D',    unit: 'nmol/L',  range: [75, 250],  chartMin: 25,  chartMax: 300, dec: 0 },
+      { key: 'fol',    label: 'Folate',       unit: 'nmol/L',  range: [10, 45],   chartMin: 3,   chartMax: 60, dec: 0 }
+    ]
+  },
+  {
+    name: 'Coagulation',
+    tests: [
+      { key: 'inr',    label: 'INR',          unit: '',        range: [0.9, 1.1], chartMin: 0.5, chartMax: 4, dec: 1 },
+      { key: 'pt',     label: 'PT',           unit: 's',       range: [11, 13.5], chartMin: 9,   chartMax: 20, dec: 1 },
+      { key: 'aptt',   label: 'aPTT',         unit: 's',       range: [25, 35],   chartMin: 20,  chartMax: 50, dec: 0 }
+    ]
+  },
+  {
+    name: 'Cardiac Markers',
+    tests: [
+      { key: 'trop',   label: 'Troponin',     unit: 'ng/L',    range: [0, 14],    chartMin: 0, chartMax: 50, dec: 0 },
+      { key: 'bnp',    label: 'BNP',          unit: 'ng/L',    range: [0, 100],   chartMin: 0, chartMax: 500, dec: 0 }
+    ]
+  },
+  {
+    name: 'Inflammation',
+    tests: [
+      { key: 'crp',    label: 'CRP',          unit: 'mg/L',    range: [0, 5],     chartMin: 0, chartMax: 30, dec: 1 },
+      { key: 'esr',    label: 'ESR',          unit: 'mm/hr',   range: [0, 20],    chartMin: 0, chartMax: 50, dec: 0 }
+    ]
+  }
+];
+
+// Build a flat lookup map by test key
+var TESTS = {};
+PANELS.forEach(function(p) { p.tests.forEach(function(t) { TESTS[t.key] = { panel: p.name, def: t }; }); });
+
+// =====================================================
+// DATA
+// =====================================================
+var results = []; // each: { date, testKey, value, notes }
+
+// =====================================================
+// ENTRY FORM
+// =====================================================
+function buildEntryDropdown() {
+  var sel = document.getElementById('entryTest');
+  PANELS.forEach(function(p) {
+    var grp = document.createElement('optgroup');
+    grp.label = p.name;
+    p.tests.forEach(function(t) {
+      var opt = document.createElement('option');
+      opt.value = t.key;
+      opt.textContent = t.label + ' (' + t.unit + ')';
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+}
+
+function addResult() {
+  var date = document.getElementById('entryDate').value;
+  var testKey = document.getElementById('entryTest').value;
+  var value = document.getElementById('entryValue').value;
+  var notes = document.getElementById('entryNotes').value;
+
+  if (!date || !testKey || value === '') {
+    alert('Please fill in date, test, and value.');
+    return;
+  }
+
+  results.push({ date: date, testKey: testKey, value: parseFloat(value), notes: notes });
+  document.getElementById('entryValue').value = '';
+  document.getElementById('entryNotes').value = '';
+  renderAll();
+  autoSave();
+}
+
+function removeResult(idx) {
+  results.splice(idx, 1);
+  renderAll();
+  autoSave();
+}
+
+function clearAll() {
+  if (!confirm('Clear all results? This cannot be undone.')) return;
+  results = [];
+  renderAll();
+  autoSave();
+}
+
+function loadSample() {
+  var sample = [
+    { date: '2024-06-15', testKey: 'hgb', value: 138, notes: '' },
+    { date: '2024-09-12', testKey: 'hgb', value: 132, notes: '' },
+    { date: '2024-11-29', testKey: 'hgb', value: 128, notes: '' },
+    { date: '2024-06-15', testKey: 'wbc', value: 6.4, notes: '' },
+    { date: '2024-11-29', testKey: 'wbc', value: 5.8, notes: '' },
+    { date: '2024-06-15', testKey: 'plt', value: 245, notes: '' },
+    { date: '2024-11-29', testKey: 'plt', value: 220, notes: '' },
+    { date: '2024-06-15', testKey: 'cr', value: 92, notes: '' },
+    { date: '2024-09-12', testKey: 'cr', value: 98, notes: '' },
+    { date: '2024-11-29', testKey: 'cr', value: 105, notes: '' },
+    { date: '2024-06-15', testKey: 'egfr', value: 72, notes: '' },
+    { date: '2024-09-12', testKey: 'egfr', value: 68, notes: '' },
+    { date: '2024-11-29', testKey: 'egfr', value: 62, notes: '' },
+    { date: '2024-06-15', testKey: 'a1c', value: 7.2, notes: '' },
+    { date: '2024-09-12', testKey: 'a1c', value: 7.5, notes: '' },
+    { date: '2024-11-29', testKey: 'a1c', value: 7.8, notes: 'Slight upward trend' },
+    { date: '2024-06-15', testKey: 'fglu', value: 6.4, notes: '' },
+    { date: '2024-09-12', testKey: 'fglu', value: 6.8, notes: '' },
+    { date: '2024-11-29', testKey: 'fglu', value: 7.1, notes: '' },
+    { date: '2024-06-15', testKey: 'tc', value: 5.4, notes: '' },
+    { date: '2024-11-29', testKey: 'tc', value: 5.1, notes: '' },
+    { date: '2024-06-15', testKey: 'ldl', value: 3.6, notes: '' },
+    { date: '2024-11-29', testKey: 'ldl', value: 3.3, notes: '' },
+    { date: '2024-06-15', testKey: 'hdl', value: 1.2, notes: '' },
+    { date: '2024-11-29', testKey: 'hdl', value: 1.3, notes: '' },
+    { date: '2024-06-15', testKey: 'tg', value: 1.8, notes: '' },
+    { date: '2024-11-29', testKey: 'tg', value: 1.6, notes: '' },
+    { date: '2024-06-15', testKey: 'tsh', value: 2.4, notes: '' },
+    { date: '2024-11-29', testKey: 'tsh', value: 2.6, notes: '' },
+    { date: '2024-06-15', testKey: 'vitd', value: 68, notes: 'Below range' },
+    { date: '2024-11-29', testKey: 'vitd', value: 82, notes: 'After supplementation' }
+  ];
+  results = sample;
+  renderAll();
+  autoSave();
+}
+
+// =====================================================
+// HELPERS
+// =====================================================
+function statusOf(value, range) {
+  if (value < range[0]) return 'Low';
+  if (value > range[1]) return 'High';
+  return 'Normal';
+}
+function fmt(v, dec) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return v.toFixed(dec);
+}
+function formatDate(d) {
+  if (!d) return '—';
+  var parts = d.split('-');
+  if (parts.length !== 3) return d;
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[parseInt(parts[1],10)-1] + ' ' + parseInt(parts[2],10) + ', ' + parts[0];
+}
+
+// =====================================================
+// RENDER PANELS
+// =====================================================
+function renderPanels() {
+  var area = document.getElementById('panelsArea');
+  area.innerHTML = '';
+
+  PANELS.forEach(function(panel) {
+    // Find all results for this panel
+    var panelResults = results.filter(function(r) {
+      return TESTS[r.testKey] && TESTS[r.testKey].panel === panel.name;
+    });
+
+    var div = document.createElement('div');
+    div.className = 'panel';
+    if (panelResults.length === 0) div.className += ' collapsed';
+
+    var headerHtml = '<div class="panel-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">' +
+      '<div><span class="panel-title">' + panel.name + '</span><span class="panel-count">' + panelResults.length + (panelResults.length === 1 ? ' result' : ' results') + '</span></div>' +
+      '<svg class="panel-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</div>';
+
+    var bodyHtml = '<div class="panel-body">';
+
+    if (panelResults.length === 0) {
+      bodyHtml += '<div class="empty-msg">No results entered for this panel yet.</div>';
+    } else {
+      // For each test in the panel that has data, render a chart + chronological list
+      panel.tests.forEach(function(test) {
+        var testResults = panelResults.filter(function(r) { return r.testKey === test.key; });
+        if (testResults.length === 0) return;
+
+        // Sort by date
+        testResults.sort(function(a,b) { return a.date.localeCompare(b.date); });
+
+        var latest = testResults[testResults.length-1];
+        var status = statusOf(latest.value, test.range);
+
+        bodyHtml += '<div class="test-block">';
+        bodyHtml += '<div class="test-row">';
+        bodyHtml += '<div class="test-info">';
+        bodyHtml += '<div class="test-name">' + test.label + ' <span style="color:var(--text-light);font-weight:400;">(' + test.unit + ')</span></div>';
+        bodyHtml += '<div class="test-meta">Reference: ' + test.range[0] + ' – ' + test.range[1] + ' ' + test.unit + ' · Latest: <span class="latest">' + fmt(latest.value, test.dec) + '</span> on ' + formatDate(latest.date) + ' · ' + status + '</div>';
+        bodyHtml += '<canvas class="chart" id="lab_' + test.key + '"></canvas>';
+        bodyHtml += '</div>';
+        bodyHtml += '<div class="median-label" id="med_' + test.key + '">—</div>';
+        bodyHtml += '</div>';
+
+        // Mini-table for this test
+        bodyHtml += '<table class="results-table" style="margin-top:0.75rem;">';
+        bodyHtml += '<thead><tr><th>Date</th><th>Value</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>';
+        testResults.forEach(function(r) {
+          var idx = results.indexOf(r);
+          var s = statusOf(r.value, test.range);
+          var cls = s === 'High' ? 'high' : s === 'Low' ? 'low' : '';
+          bodyHtml += '<tr class="' + cls + '">';
+          bodyHtml += '<td>' + formatDate(r.date) + '</td>';
+          bodyHtml += '<td>' + fmt(r.value, test.dec) + ' ' + test.unit + '</td>';
+          bodyHtml += '<td class="status-cell">' + s + '</td>';
+          bodyHtml += '<td>' + (r.notes || '') + '</td>';
+          bodyHtml += '<td><button class="row-remove" onclick="removeResult(' + idx + ')" title="Remove">&times;</button></td>';
+          bodyHtml += '</tr>';
+        });
+        bodyHtml += '</tbody></table>';
+        bodyHtml += '</div>';
+      });
+    }
+
+    bodyHtml += '</div>';
+    div.innerHTML = headerHtml + bodyHtml;
+    area.appendChild(div);
+  });
+
+  // Update result count
+  document.getElementById('resultInfo').textContent = results.length + (results.length === 1 ? ' result entered' : ' results entered');
+
+  // Draw all charts after layout
+  requestAnimationFrame(function() {
+    PANELS.forEach(function(panel) {
+      panel.tests.forEach(function(test) {
+        var testResults = results.filter(function(r) { return r.testKey === test.key; });
+        if (testResults.length > 0) drawChart(test);
+      });
+    });
+  });
+}
+
+function drawChart(test) {
+  var canvas = document.getElementById('lab_' + test.key);
+  if (!canvas) return;
+
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var w = rect.width, h = rect.height;
+  var padL = 40, padR = 8, padT = 6, padB = 14;
+  var plotW = w - padL - padR;
+  var plotH = h - padT - padB;
+
+  ctx.fillStyle = '#FAFAF6';
+  ctx.fillRect(padL, padT, plotW, plotH);
+
+  // Sort results by date
+  var points = results
+    .filter(function(r) { return r.testKey === test.key; })
+    .sort(function(a,b) { return a.date.localeCompare(b.date); });
+
+  if (points.length === 0) return;
+
+  // Y axis range
+  var yMin = test.chartMin, yMax = test.chartMax;
+  points.forEach(function(p) {
+    if (p.value < yMin) yMin = p.value;
+    if (p.value > yMax) yMax = p.value;
+  });
+  var yRange = yMax - yMin || 1;
+  function yToPx(val) { return padT + plotH - ((val - yMin) / yRange) * plotH; }
+
+  // Normal range band
+  var normTop = yToPx(Math.min(test.range[1], yMax));
+  var normBot = yToPx(Math.max(test.range[0], yMin));
+  ctx.fillStyle = 'rgba(196,206,188,0.45)';
+  ctx.fillRect(padL, normTop, plotW, normBot - normTop);
+
+  // Border
+  ctx.strokeStyle = '#D4DDD8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(padL + 0.5, padT + 0.5, plotW - 1, plotH - 1);
+
+  // Y labels
+  ctx.fillStyle = '#7A9494';
+  ctx.font = '9px Inter, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fmt(yMax, test.dec), padL - 4, padT + 8);
+  ctx.fillText(fmt((yMin + yMax) / 2, test.dec), padL - 4, padT + plotH/2);
+  ctx.fillText(fmt(yMin, test.dec), padL - 4, padT + plotH - 6);
+
+  // Median line
+  var sortedVals = points.map(function(p){return p.value;}).sort(function(a,b){return a-b;});
+  var med = sortedVals.length % 2 === 0
+    ? (sortedVals[sortedVals.length/2 - 1] + sortedVals[sortedVals.length/2]) / 2
+    : sortedVals[Math.floor(sortedVals.length/2)];
+  if (!isNaN(med)) {
+    ctx.strokeStyle = '#E89F4A';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(padL, yToPx(med));
+    ctx.lineTo(padL + plotW, yToPx(med));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    var medEl = document.getElementById('med_' + test.key);
+    if (medEl) medEl.textContent = 'median ' + fmt(med, test.dec);
+  }
+
+  // Data line
+  if (points.length >= 2) {
+    ctx.strokeStyle = '#2E7D6B';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach(function(p, i) {
+      var x = padL + (i / (points.length - 1)) * plotW;
+      var y = yToPx(p.value);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  // Dots
+  ctx.fillStyle = '#2E7D6B';
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  points.forEach(function(p, i) {
+    var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
+    var y = yToPx(p.value);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+}
+
+// =====================================================
+// MAIN
+// =====================================================
+function renderAll() {
+  renderPanels();
+}
+
+// =====================================================
+// PERSISTENCE
+// =====================================================
+var saveTimeout;
+function autoSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(function() {
+    var meta = {};
+    document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
+      meta['m' + i] = el.textContent;
+    });
+    try {
+      localStorage.setItem('whtalife_labs', JSON.stringify({ results: results, meta: meta }));
+      var ind = document.getElementById('saveIndicator');
+      ind.classList.add('show');
+      setTimeout(function() { ind.classList.remove('show'); }, 1200);
+    } catch(e) {}
+  }, 400);
+}
+
+function loadSaved() {
+  try {
+    var raw = localStorage.getItem('whtalife_labs');
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    if (data.results) results = data.results;
+    if (data.meta) {
+      var fields = document.querySelectorAll('.meta-row [contenteditable]');
+      Object.keys(data.meta).forEach(function(k) {
+        var idx = parseInt(k.substr(1), 10);
+        if (fields[idx]) fields[idx].textContent = data.meta[k];
+      });
+    }
+  } catch(e) { console.error('Load error:', e); }
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.hasAttribute('contenteditable')) autoSave();
+});
+
+// =====================================================
+// PDF DOWNLOAD
+// =====================================================
+function downloadPDF() {
+  var nameEl = document.querySelector('.meta-row [contenteditable]');
+  var name = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Lab_Results';
+  var filename = 'Lab_Results_' + name + '.pdf';
+
+  // Expand all panels for the PDF
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('collapsed'); });
+
+  var hideEls = document.querySelectorAll('.action-bar, .add-result-btn, .clear-btn, .row-remove, .save-indicator, .entry-form, .panel-toggle');
+  hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
+
+  setTimeout(function() {
+    var element = document.body;
+    var opt = {
+      margin: [10, 10, 10, 10],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    html2pdf().set(opt).from(element).save().then(function() {
+      hideEls.forEach(function(el) { el.style.visibility = ''; });
+    }).catch(function(err) {
+      hideEls.forEach(function(el) { el.style.visibility = ''; });
+      console.error(err);
+      alert('PDF generation failed. Try the Print button instead.');
+    });
+  }, 500);
+}
+
+// Init
+buildEntryDropdown();
+loadSaved();
+renderAll();
+
+// Set today's date as default in entry form
+document.getElementById('entryDate').value = new Date().toISOString().substr(0,10);
+
+// Re-render charts on resize
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    PANELS.forEach(function(panel) {
+      panel.tests.forEach(function(test) {
+        var testResults = results.filter(function(r) { return r.testKey === test.key; });
+        if (testResults.length > 0) drawChart(test);
+      });
+    });
+  }, 200);
+});
+</script>
+
+</body>
+</html>
