@@ -108,14 +108,14 @@
   .panel {
     background: var(--white);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--aegean);
+    border-left: 4px solid var(--panel-color, var(--aegean));
     border-radius: 6px;
     margin-bottom: 1rem;
     overflow: hidden;
   }
   .panel-header {
     padding: 0.75rem 1rem;
-    background: var(--cream);
+    background: var(--panel-bg, var(--cream));
     border-bottom: 1px solid var(--border-light);
     display: flex;
     align-items: center;
@@ -127,7 +127,7 @@
     font-family: 'Lora', serif;
     font-weight: 600;
     font-size: 0.95rem;
-    color: var(--aegean-dark);
+    color: var(--panel-color, var(--aegean-dark));
   }
   .panel-count {
     font-size: 0.7rem;
@@ -175,7 +175,7 @@
     font-weight: 600;
   }
   canvas.chart {
-    width: 100%; height: 70px;
+    width: 100%; height: 130px;
     border-radius: 4px;
   }
   .median-label {
@@ -440,6 +440,7 @@
 var PANELS = [
   {
     name: 'CBC — Complete Blood Count',
+    color: '#7B5AA8', bg: '#F0EAF6',
     tests: [
       { key: 'hgb',    label: 'Hemoglobin',   unit: 'g/L',     range: [120, 160], chartMin: 80,  chartMax: 200, dec: 0 },
       { key: 'hct',    label: 'Hematocrit',   unit: 'L/L',     range: [0.36, 0.48], chartMin: 0.25, chartMax: 0.55, dec: 2 },
@@ -450,6 +451,7 @@ var PANELS = [
   },
   {
     name: 'CMP / Electrolytes',
+    color: '#6B9E3F', bg: '#EEF4E4',
     tests: [
       { key: 'na',     label: 'Sodium',       unit: 'mmol/L',  range: [135, 145], chartMin: 125, chartMax: 155, dec: 0 },
       { key: 'k',      label: 'Potassium',    unit: 'mmol/L',  range: [3.5, 5.0], chartMin: 2.5, chartMax: 6.5, dec: 1 },
@@ -462,6 +464,7 @@ var PANELS = [
   },
   {
     name: 'Liver Function',
+    color: '#C99A2E', bg: '#F7F0DD',
     tests: [
       { key: 'alt',    label: 'ALT',          unit: 'U/L',     range: [7, 56],    chartMin: 0, chartMax: 120, dec: 0 },
       { key: 'ast',    label: 'AST',          unit: 'U/L',     range: [10, 40],   chartMin: 0, chartMax: 120, dec: 0 },
@@ -472,6 +475,7 @@ var PANELS = [
   },
   {
     name: 'Lipid Panel',
+    color: '#D97A1E', bg: '#FAEEDC',
     tests: [
       { key: 'tc',     label: 'Total Cholesterol', unit: 'mmol/L', range: [0, 5.2], chartMin: 2, chartMax: 8, dec: 1 },
       { key: 'ldl',    label: 'LDL',               unit: 'mmol/L', range: [0, 3.5], chartMin: 1, chartMax: 6, dec: 1 },
@@ -481,7 +485,8 @@ var PANELS = [
     ]
   },
   {
-    name: 'Diabetes',
+    name: 'Metabolic — Diabetes',
+    color: '#2A8E8E', bg: '#E0EFEF',
     tests: [
       { key: 'a1c',    label: 'HbA1c',          unit: '%',      range: [4.0, 6.0], chartMin: 4, chartMax: 12, dec: 1 },
       { key: 'fglu',   label: 'Fasting Glucose', unit: 'mmol/L', range: [3.9, 5.6], chartMin: 3, chartMax: 12, dec: 1 },
@@ -489,7 +494,8 @@ var PANELS = [
     ]
   },
   {
-    name: 'Thyroid',
+    name: 'Hormone — Thyroid',
+    color: '#E37464', bg: '#FBE6E2',
     tests: [
       { key: 'tsh',    label: 'TSH',          unit: 'mIU/L',   range: [0.32, 4.0], chartMin: 0, chartMax: 8, dec: 2 },
       { key: 'ft4',    label: 'Free T4',      unit: 'pmol/L',  range: [10, 25],    chartMin: 5, chartMax: 35, dec: 1 },
@@ -498,6 +504,7 @@ var PANELS = [
   },
   {
     name: 'Iron Studies',
+    color: '#A05A2C', bg: '#F3E6DB',
     tests: [
       { key: 'fer',    label: 'Ferritin',     unit: 'μg/L',    range: [15, 200], chartMin: 0, chartMax: 400, dec: 0 },
       { key: 'iron',   label: 'Iron',         unit: 'μmol/L',  range: [10, 30],  chartMin: 5, chartMax: 40, dec: 0 },
@@ -506,6 +513,7 @@ var PANELS = [
   },
   {
     name: 'Vitamins',
+    color: '#3A6EAE', bg: '#E1EAF5',
     tests: [
       { key: 'b12',    label: 'Vitamin B12',  unit: 'pmol/L',  range: [156, 672], chartMin: 100, chartMax: 800, dec: 0 },
       { key: 'vitd',   label: 'Vitamin D',    unit: 'nmol/L',  range: [75, 250],  chartMin: 25,  chartMax: 300, dec: 0 },
@@ -514,6 +522,7 @@ var PANELS = [
   },
   {
     name: 'Coagulation',
+    color: '#5C6B7A', bg: '#E6E9EC',
     tests: [
       { key: 'inr',    label: 'INR',          unit: '',        range: [0.9, 1.1], chartMin: 0.5, chartMax: 4, dec: 1 },
       { key: 'pt',     label: 'PT',           unit: 's',       range: [11, 13.5], chartMin: 9,   chartMax: 20, dec: 1 },
@@ -522,6 +531,7 @@ var PANELS = [
   },
   {
     name: 'Cardiac Markers',
+    color: '#C8362E', bg: '#F8E2E0',
     tests: [
       { key: 'trop',   label: 'Troponin',     unit: 'ng/L',    range: [0, 14],    chartMin: 0, chartMax: 50, dec: 0 },
       { key: 'bnp',    label: 'BNP',          unit: 'ng/L',    range: [0, 100],   chartMin: 0, chartMax: 500, dec: 0 }
@@ -529,9 +539,32 @@ var PANELS = [
   },
   {
     name: 'Inflammation',
+    color: '#9D3578', bg: '#F2E1EC',
     tests: [
       { key: 'crp',    label: 'CRP',          unit: 'mg/L',    range: [0, 5],     chartMin: 0, chartMax: 30, dec: 1 },
       { key: 'esr',    label: 'ESR',          unit: 'mm/hr',   range: [0, 20],    chartMin: 0, chartMax: 50, dec: 0 }
+    ]
+  },
+  {
+    name: 'Urinalysis',
+    color: '#D85C8A', bg: '#FBE5EE',
+    tests: [
+      { key: 'usg',     label: 'Specific Gravity', unit: '',       range: [1.005, 1.030], chartMin: 1.000, chartMax: 1.035, dec: 3 },
+      { key: 'uph',     label: 'pH',               unit: '',       range: [4.5, 8.0],     chartMin: 4,     chartMax: 9,     dec: 1 },
+      { key: 'uprot',   label: 'Protein',          unit: 'g/L',    range: [0, 0.15],      chartMin: 0,     chartMax: 1,     dec: 2 },
+      { key: 'uglu',    label: 'Glucose',          unit: 'mmol/L', range: [0, 0.8],       chartMin: 0,     chartMax: 5,     dec: 1 },
+      { key: 'uket',    label: 'Ketones',          unit: 'mmol/L', range: [0, 0.5],       chartMin: 0,     chartMax: 4,     dec: 1 },
+      { key: 'ublood',  label: 'Blood (RBC count)', unit: '/hpf', range: [0, 3],         chartMin: 0,     chartMax: 30,    dec: 0 },
+      { key: 'uwbc',    label: 'WBC',              unit: '/hpf',   range: [0, 5],         chartMin: 0,     chartMax: 50,    dec: 0 }
+    ]
+  },
+  {
+    name: 'Swab & Culture Results',
+    color: '#7A1F35', bg: '#EFD9DE',
+    tests: [
+      { key: 'wndcfu', label: 'Wound Culture (CFU/mL)',     unit: 'CFU/mL', range: [0, 100000], chartMin: 0, chartMax: 1000000, dec: 0 },
+      { key: 'urcfu',  label: 'Urine Culture (CFU/mL)',     unit: 'CFU/mL', range: [0, 100000], chartMin: 0, chartMax: 1000000, dec: 0 },
+      { key: 'thrcfu', label: 'Throat Swab (CFU/mL)',       unit: 'CFU/mL', range: [0, 100000], chartMin: 0, chartMax: 1000000, dec: 0 }
     ]
   }
 ];
@@ -713,6 +746,8 @@ function renderPanels() {
 
     var div = document.createElement('div');
     div.className = 'panel';
+    if (panel.color) div.style.setProperty('--panel-color', panel.color);
+    if (panel.bg) div.style.setProperty('--panel-bg', panel.bg);
     if (panelResults.length === 0) div.className += ' collapsed';
 
     var headerHtml = '<div class="panel-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">' +
@@ -779,13 +814,13 @@ function renderPanels() {
     PANELS.forEach(function(panel) {
       panel.tests.forEach(function(test) {
         var testResults = results.filter(function(r) { return r.testKey === test.key; });
-        if (testResults.length > 0) drawChart(test);
+        if (testResults.length > 0) drawChart(test, panel.color);
       });
     });
   });
 }
 
-function drawChart(test) {
+function drawChart(test, color) {
   var canvas = document.getElementById('lab_' + test.key);
   if (!canvas) return;
 
@@ -858,10 +893,12 @@ function drawChart(test) {
     if (medEl) medEl.textContent = 'median ' + fmt(med, test.dec);
   }
 
+  var lineColor = color || '#2E7D6B';
+
   // Data line
   if (points.length >= 2) {
-    ctx.strokeStyle = '#2E7D6B';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     points.forEach(function(p, i) {
       var x = padL + (i / (points.length - 1)) * plotW;
@@ -873,14 +910,14 @@ function drawChart(test) {
   }
 
   // Dots
-  ctx.fillStyle = '#2E7D6B';
+  ctx.fillStyle = lineColor;
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 1.5;
   points.forEach(function(p, i) {
     var x = padL + (points.length === 1 ? plotW/2 : (i / (points.length - 1)) * plotW);
     var y = yToPx(p.value);
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   });
@@ -984,7 +1021,7 @@ window.addEventListener('resize', function() {
     PANELS.forEach(function(panel) {
       panel.tests.forEach(function(test) {
         var testResults = results.filter(function(r) { return r.testKey === test.key; });
-        if (testResults.length > 0) drawChart(test);
+        if (testResults.length > 0) drawChart(test, panel.color);
       });
     });
   }, 200);
