@@ -585,6 +585,9 @@ var PANELS = [
   }
 ];
 
+// Sort panels alphabetically by name
+PANELS.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
 // Build a flat lookup map by test key
 var TESTS = {};
 PANELS.forEach(function(p) { p.tests.forEach(function(t) { TESTS[t.key] = { panel: p.name, def: t }; }); });
