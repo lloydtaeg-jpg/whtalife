@@ -399,7 +399,7 @@
   </div>
 
   <div class="entry-form">
-    <h3>Add a New Result</h3>
+    <h3>Add a Lab Result</h3>
     <div class="entry-grid">
       <div class="field">
         <label>Date</label>
@@ -417,7 +417,46 @@
         <label>Notes</label>
         <input type="text" id="entryNotes" placeholder="Optional">
       </div>
-      <button class="add-result-btn" onclick="addResult()">+ Add Result</button>
+      <button class="add-result-btn" onclick="addResult()">+ Add</button>
+    </div>
+  </div>
+
+  <div class="entry-form" style="border-left:4px solid #7A1F35;">
+    <h3 style="color:#7A1F35;">Add a Swab / Culture Result</h3>
+    <div class="entry-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1.2fr auto;">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="swabDate">
+      </div>
+      <div class="field">
+        <label>Site</label>
+        <select id="swabSite">
+          <option value="">Select site…</option>
+          <option>Wound</option>
+          <option>Urine</option>
+          <option>Throat</option>
+          <option>Blood</option>
+          <option>Sputum</option>
+          <option>Nasal</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Result</label>
+        <select id="swabResult">
+          <option value="Negative">Negative</option>
+          <option value="Positive">Positive</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Organism</label>
+        <input type="text" id="swabOrganism" placeholder="e.g. E. coli, MRSA">
+      </div>
+      <div class="field">
+        <label>Sensitivity / Notes</label>
+        <input type="text" id="swabNotes" placeholder="e.g. Sensitive to Cipro">
+      </div>
+      <button class="add-result-btn" onclick="addSwab()">+ Add</button>
     </div>
   </div>
 
@@ -580,11 +619,9 @@ var PANELS = [
   {
     name: 'Swab & Culture Results',
     color: '#7A1F35', bg: '#EFD9DE',
-    tests: [
-      { key: 'wndcfu', label: 'Wound Culture (CFU/mL)',     unit: 'CFU/mL', range: [0, 100000], chartMin: 0, chartMax: 1000000, dec: 0 },
-      { key: 'urcfu',  label: 'Urine Culture (CFU/mL)',     unit: 'CFU/mL', range: [0, 100000], chartMin: 0, chartMax: 1000000, dec: 0 },
-      { key: 'thrcfu', label: 'Throat Swab (CFU/mL)',       unit: 'CFU/mL', range: [0, 100000], chartMin: 0, chartMax: 1000000, dec: 0 }
-    ]
+    qualitative: true,
+    sites: ['Wound', 'Urine', 'Throat', 'Blood', 'Sputum', 'Nasal', 'Other'],
+    tests: []
   }
 ];
 
@@ -599,6 +636,7 @@ PANELS.forEach(function(p) { p.tests.forEach(function(t) { TESTS[t.key] = { pane
 // DATA
 // =====================================================
 var results = []; // each: { date, testKey, value, notes }
+var swabs = [];   // each: { date, site, result, organism, notes }
 
 // =====================================================
 // ENTRY FORM
@@ -642,9 +680,35 @@ function removeResult(idx) {
   autoSave();
 }
 
+function addSwab() {
+  var date = document.getElementById('swabDate').value;
+  var site = document.getElementById('swabSite').value;
+  var result = document.getElementById('swabResult').value;
+  var organism = document.getElementById('swabOrganism').value;
+  var notes = document.getElementById('swabNotes').value;
+
+  if (!date || !site) {
+    alert('Please fill in date and site.');
+    return;
+  }
+
+  swabs.push({ date: date, site: site, result: result, organism: organism, notes: notes });
+  document.getElementById('swabOrganism').value = '';
+  document.getElementById('swabNotes').value = '';
+  renderAll();
+  autoSave();
+}
+
+function removeSwab(idx) {
+  swabs.splice(idx, 1);
+  renderAll();
+  autoSave();
+}
+
 function clearAll() {
   if (!confirm('Clear all results? This cannot be undone.')) return;
   results = [];
+  swabs = [];
   renderAll();
   autoSave();
 }
@@ -677,9 +741,11 @@ function loadPatientData() {
     { date: '2025-02-12', testKey: 'alp', value: 147, notes: 'Above range' }
   ];
   results = data;
+  swabs = [];
   renderAll();
   autoSave();
 }
+
 
 function loadSample() {
   // 13 weekly lab draws spanning a 3-month period showing several
@@ -761,6 +827,15 @@ function loadSample() {
 
   // Filter out null values (a1c, lipids, etc. only checked monthly)
   results = sample.filter(function(r) { return r.value !== null && r.value !== undefined; });
+  swabs = [
+    { date: '2024-09-10', site: 'Urine', result: 'Positive', organism: 'E. coli', notes: 'Sensitive to Cipro, Nitrofurantoin' },
+    { date: '2024-09-25', site: 'Urine', result: 'Negative', organism: '', notes: 'Follow-up — cleared' },
+    { date: '2024-10-08', site: 'Wound', result: 'Positive', organism: 'MRSA', notes: 'Left shin. Sensitive to Bactrim, Vancomycin' },
+    { date: '2024-10-22', site: 'Wound', result: 'Positive', organism: 'MRSA', notes: 'Ongoing treatment' },
+    { date: '2024-11-05', site: 'Wound', result: 'Negative', organism: '', notes: 'Cleared after Bactrim course' },
+    { date: '2024-11-12', site: 'Throat', result: 'Negative', organism: '', notes: 'Routine screen' },
+    { date: '2024-11-20', site: 'Nasal', result: 'Positive', organism: 'MRSA', notes: 'Decolonization protocol initiated' }
+  ];
   renderAll();
   autoSave();
 }
@@ -793,7 +868,53 @@ function renderPanels() {
   area.innerHTML = '';
 
   PANELS.forEach(function(panel) {
-    // Find all results for this panel
+    // Handle qualitative (swab/culture) panel differently
+    if (panel.qualitative) {
+      var div = document.createElement('div');
+      div.className = 'panel';
+      if (panel.color) div.style.setProperty('--panel-color', panel.color);
+      if (panel.bg) div.style.setProperty('--panel-bg', panel.bg);
+      if (swabs.length === 0) div.className += ' collapsed';
+
+      var headerHtml = '<div class="panel-header" onclick="this.parentElement.classList.toggle(\'collapsed\')">' +
+        '<div><span class="panel-title">' + panel.name + '</span><span class="panel-count">' + swabs.length + (swabs.length === 1 ? ' result' : ' results') + '</span></div>' +
+        '<svg class="panel-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>' +
+        '</div>';
+
+      var bodyHtml = '<div class="panel-body">';
+
+      if (swabs.length === 0) {
+        bodyHtml += '<div class="empty-msg">No swab or culture results entered yet.</div>';
+      } else {
+        // Timeline chart
+        bodyHtml += '<canvas class="chart" id="swab_timeline" style="height:120px;"></canvas>';
+
+        // Results table
+        bodyHtml += '<table class="results-table" style="margin-top:0.75rem;">';
+        bodyHtml += '<thead><tr><th>Date</th><th>Site</th><th>Result</th><th>Organism</th><th>Sensitivity / Notes</th><th></th></tr></thead><tbody>';
+        var sorted = swabs.slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
+        sorted.forEach(function(s) {
+          var idx = swabs.indexOf(s);
+          var cls = s.result === 'Positive' ? 'high' : '';
+          bodyHtml += '<tr class="' + cls + '">';
+          bodyHtml += '<td>' + formatDate(s.date) + '</td>';
+          bodyHtml += '<td>' + s.site + '</td>';
+          bodyHtml += '<td class="status-cell">' + s.result + '</td>';
+          bodyHtml += '<td>' + (s.organism || '—') + '</td>';
+          bodyHtml += '<td>' + (s.notes || '—') + '</td>';
+          bodyHtml += '<td><button class="row-remove" onclick="removeSwab(' + idx + ')" title="Remove">&times;</button></td>';
+          bodyHtml += '</tr>';
+        });
+        bodyHtml += '</tbody></table>';
+      }
+
+      bodyHtml += '</div>';
+      div.innerHTML = headerHtml + bodyHtml;
+      area.appendChild(div);
+      return;
+    }
+
+    // Standard quantitative panel
     var panelResults = results.filter(function(r) {
       return TESTS[r.testKey] && TESTS[r.testKey].panel === panel.name;
     });
@@ -814,12 +935,10 @@ function renderPanels() {
     if (panelResults.length === 0) {
       bodyHtml += '<div class="empty-msg">No results entered for this panel yet.</div>';
     } else {
-      // For each test in the panel that has data, render a chart + chronological list
       panel.tests.forEach(function(test) {
         var testResults = panelResults.filter(function(r) { return r.testKey === test.key; });
         if (testResults.length === 0) return;
 
-        // Sort by date
         testResults.sort(function(a,b) { return a.date.localeCompare(b.date); });
 
         var latest = testResults[testResults.length-1];
@@ -836,7 +955,6 @@ function renderPanels() {
         bodyHtml += '<div class="median-label" id="med_' + test.key + '">—</div>';
         bodyHtml += '</div>';
 
-        // Mini-table for this test
         bodyHtml += '<table class="results-table" style="margin-top:0.75rem;">';
         bodyHtml += '<thead><tr><th>Date</th><th>Value</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>';
         testResults.forEach(function(r) {
@@ -862,7 +980,7 @@ function renderPanels() {
   });
 
   // Update result count
-  document.getElementById('resultInfo').textContent = results.length + (results.length === 1 ? ' result entered' : ' results entered');
+  document.getElementById('resultInfo').textContent = (results.length + swabs.length) + ' results entered';
 
   // Draw all charts after layout
   requestAnimationFrame(function() {
@@ -1010,10 +1128,95 @@ function drawChart(test, color) {
 }
 
 // =====================================================
+// SWAB TIMELINE CHART
+// =====================================================
+function drawSwabTimeline() {
+  var canvas = document.getElementById('swab_timeline');
+  if (!canvas || swabs.length === 0) return;
+
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var w = rect.width, h = rect.height;
+  var padL = 8, padR = 8, padT = 10, padB = 20;
+  var plotW = w - padL - padR;
+  var plotH = h - padT - padB;
+
+  // Background
+  ctx.fillStyle = '#FAFAF6';
+  ctx.fillRect(padL, padT, plotW, plotH);
+  ctx.strokeStyle = '#D4DDD8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(padL + 0.5, padT + 0.5, plotW - 1, plotH - 1);
+
+  // Sort by date
+  var sorted = swabs.slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
+
+  // Draw timeline line
+  var lineY = padT + plotH / 2;
+  ctx.strokeStyle = '#D4DDD8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(padL + 20, lineY);
+  ctx.lineTo(padL + plotW - 20, lineY);
+  ctx.stroke();
+
+  // Draw each result as a marker on the timeline
+  var posColor = '#C8362E';
+  var negColor = '#4A7A4A';
+
+  sorted.forEach(function(s, i) {
+    var x = padL + 20 + (sorted.length === 1 ? plotW/2 - 20 : (i / (sorted.length - 1)) * (plotW - 40));
+    var isPos = s.result === 'Positive';
+    var color = isPos ? posColor : negColor;
+
+    // Circle marker
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, lineY, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // +/- symbol inside circle
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(isPos ? '+' : '–', x, lineY);
+
+    // Organism label above (positive) or site label (negative)
+    var label = isPos ? (s.organism || s.site) : s.site;
+    ctx.fillStyle = color;
+    ctx.font = '600 9px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    // White outline for readability
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 3;
+    ctx.strokeText(label, x, lineY - 14);
+    ctx.fillStyle = color;
+    ctx.fillText(label, x, lineY - 14);
+
+    // Date label below
+    ctx.fillStyle = '#7A9494';
+    ctx.font = '8px Inter, sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillText(formatDate(s.date), x, lineY + 14);
+  });
+}
+
+// =====================================================
 // MAIN
 // =====================================================
 function renderAll() {
   renderPanels();
+  requestAnimationFrame(drawSwabTimeline);
 }
 
 // =====================================================
@@ -1028,7 +1231,7 @@ function autoSave() {
       meta['m' + i] = el.textContent;
     });
     try {
-      localStorage.setItem('whtalife_labs', JSON.stringify({ results: results, meta: meta }));
+      localStorage.setItem('whtalife_labs', JSON.stringify({ results: results, swabs: swabs, meta: meta }));
       var ind = document.getElementById('saveIndicator');
       ind.classList.add('show');
       setTimeout(function() { ind.classList.remove('show'); }, 1200);
@@ -1042,6 +1245,7 @@ function loadSaved() {
     if (!raw) return;
     var data = JSON.parse(raw);
     if (data.results) results = data.results;
+    if (data.swabs) swabs = data.swabs;
     if (data.meta) {
       var fields = document.querySelectorAll('.meta-row [contenteditable]');
       Object.keys(data.meta).forEach(function(k) {
