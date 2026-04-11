@@ -410,8 +410,8 @@
     <!-- summary cards inserted by JS -->
   </div>
 
-  <h2>Trend Charts</h2>
-  <div class="section-desc">Each chart plots all readings entered below in chronological order. The shaded green band marks the standard normal reference range. The dashed orange line shows the median.</div>
+  <h2>Trend Charts — Morning vs Evening</h2>
+  <div class="section-desc">For each vital sign, the morning chart (readings before 12:00 PM) is shown above and the evening chart (12:00 PM and later) below. The shaded green band marks the standard normal reference range. The dashed orange line shows the median.</div>
 
   <div id="chartsArea"><!-- chart blocks inserted by JS --></div>
 
@@ -731,18 +731,21 @@ function renderCharts() {
     block.className = 'chart-block';
     block.innerHTML =
       '<div class="chart-title">' + v.label + ' (' + v.unit + ')</div>' +
-      '<div class="chart-row"><canvas id="ch_' + v.key + '"></canvas><div class="chart-label">All readings<span class="median" id="md_' + v.key + '">—</span></div></div>';
+      '<div class="chart-pair" style="display:flex;flex-direction:column;gap:0.4rem;">' +
+        '<div class="chart-row"><canvas id="ch_' + v.key + '_m"></canvas><div class="chart-label">Morning<span class="median" id="md_' + v.key + '_m">—</span></div></div>' +
+        '<div class="chart-row"><canvas id="ch_' + v.key + '_e"></canvas><div class="chart-label">Evening<span class="median" id="md_' + v.key + '_e">—</span></div></div>' +
+      '</div>';
     area.appendChild(block);
   });
-  // Wait for layout before drawing so canvas dimensions are correct
   requestAnimationFrame(function() {
     VITALS.forEach(function(v) {
-      drawChart('ch_' + v.key, 'md_' + v.key, v);
+      drawChart('ch_' + v.key + '_m', 'md_' + v.key + '_m', v, 'morning');
+      drawChart('ch_' + v.key + '_e', 'md_' + v.key + '_e', v, 'evening');
     });
   });
 }
 
-function drawChart(canvasId, medianId, vital) {
+function drawChart(canvasId, medianId, vital, period) {
   var canvas = document.getElementById(canvasId);
   if (!canvas) return;
   var dpr = window.devicePixelRatio || 1;
@@ -761,14 +764,25 @@ function drawChart(canvasId, medianId, vital) {
   ctx.fillStyle = '#FAFAF6';
   ctx.fillRect(padL, padT, plotW, plotH);
 
-  // Get all data points for this vital sign (no morning/evening filter)
+  // Get data points filtered by morning/evening
   var points = [];
   rows.forEach(function(r, idx) {
     var v = parseFloat(r[vital.key]);
     if (isNaN(v)) return;
-    points.push({ datetime: r.datetime || '', value: v, idx: idx });
+    var dt = r.datetime || '';
+    // Extract hour to determine morning/evening
+    var hour = -1;
+    var tMatch = dt.match(/T(\d{2})/);
+    if (tMatch) hour = parseInt(tMatch[1], 10);
+    else {
+      var spaceMatch = dt.match(/\s(\d{2})/);
+      if (spaceMatch) hour = parseInt(spaceMatch[1], 10);
+    }
+    if (period === 'morning' && hour >= 12) return;
+    if (period === 'evening' && hour >= 0 && hour < 12) return;
+    points.push({ datetime: dt, value: v, idx: idx });
   });
-  // Sort by datetime if available, otherwise keep entry order
+  // Sort by datetime
   points.sort(function(a,b){
     if (a.datetime && b.datetime) return a.datetime.localeCompare(b.datetime);
     return a.idx - b.idx;
@@ -826,12 +840,13 @@ function drawChart(canvasId, medianId, vital) {
     ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('No data yet', padL + plotW/2, padT + plotH/2);
+    var noDataMsg = period ? 'No ' + period + ' data' : 'No data yet';
+    ctx.fillText(noDataMsg, padL + plotW/2, padT + plotH/2);
     document.getElementById(medianId).textContent = '—';
     return;
   }
 
-  var color = '#2E7D6B';
+  var color = period === 'evening' ? '#C7572A' : '#2E7D6B';
 
   // Median line (dashed)
   var med = median(points.map(function(p){return p.value;}));
