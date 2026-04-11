@@ -1038,7 +1038,22 @@ function readCsvFile(file, handler) {
 function importVitals(text) {
   var csvRows = parseCSV(text);
   if (csvRows.length < 2) { alert('CSV file appears empty or has no data rows.'); return; }
-  var headers = csvRows[0].map(function(h) { return h.toLowerCase().replace(/[^a-z0-9]/g, ''); });
+
+  // Find the actual header row — skip title lines that don't contain expected column names
+  var headerRowIdx = -1;
+  for (var h = 0; h < Math.min(csvRows.length, 5); h++) {
+    var testHeaders = csvRows[h].map(function(c) { return c.toLowerCase().replace(/[^a-z0-9]/g, ''); });
+    if (testHeaders.indexOf('datetime') >= 0 || testHeaders.indexOf('date') >= 0) {
+      headerRowIdx = h;
+      break;
+    }
+  }
+  if (headerRowIdx < 0) {
+    alert('Could not find a header row with a DateTime or Date column. Please check your CSV file.');
+    return;
+  }
+
+  var headers = csvRows[headerRowIdx].map(function(c) { return c.toLowerCase().replace(/[^a-z0-9]/g, ''); });
 
   // Find column indices (case-insensitive, flexible naming)
   function findCol() {
@@ -1056,24 +1071,23 @@ function importVitals(text) {
   var sysIdx = findCol('systolic', 'sys');
   var diaIdx = findCol('diastolic', 'dia');
   var hrIdx = findCol('hr', 'heartrate', 'pulse');
-  var spo2Idx = findCol('spo2', 'o2sat', 'oxsat', 'saturation');
+  var spo2Idx = findCol('spo2', 'o2sat', 'oxsat', 'saturation', 'spo2');
   var rrIdx = findCol('rr', 'respiratoryrate', 'resprate');
   var gluIdx = findCol('glucose', 'bloodglucose', 'bg');
 
-  if (dtIdx < 0) {
-    alert('CSV must have a DateTime (or Date) column.');
-    return;
-  }
-
   var count = 0;
-  for (var i = 1; i < csvRows.length; i++) {
+  for (var i = headerRowIdx + 1; i < csvRows.length; i++) {
     var r = csvRows[i];
     if (r.length < 2) continue;
 
-    var datetime = r[dtIdx] || '';
+    var datetime = (r[dtIdx] || '').trim();
     if (timeIdx >= 0 && r[timeIdx]) {
-      datetime = datetime + (datetime ? ' ' : '') + r[timeIdx];
+      datetime = datetime + (datetime ? ' ' : '') + r[timeIdx].trim();
     }
+    // Normalize datetime to YYYY-MM-DDTHH:MM format for datetime-local inputs
+    datetime = datetime.replace(' ', 'T');
+    // Handle YYYY-MM-DD without time
+    if (/^\d{4}-\d{2}-\d{2}$/.test(datetime)) datetime = datetime + 'T08:00';
 
     var sys = '', dia = '';
     if (bpIdx >= 0 && r[bpIdx]) {

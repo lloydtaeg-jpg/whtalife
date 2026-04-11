@@ -1417,9 +1417,22 @@ function readCsvFile(file, handler) {
 }
 
 function importLabResults(text) {
-  var rows = parseCSV(text);
-  if (rows.length < 2) { alert('CSV file appears empty or has no data rows.'); return; }
-  var headers = rows[0].map(function(h) { return h.toLowerCase(); });
+  var csvRows = parseCSV(text);
+  if (csvRows.length < 2) { alert('CSV file appears empty or has no data rows.'); return; }
+  // Find the actual header row — skip title lines
+  var headerRowIdx = -1;
+  for (var h = 0; h < Math.min(csvRows.length, 5); h++) {
+    var testH = csvRows[h].map(function(c) { return c.toLowerCase().trim(); });
+    if (testH.indexOf('date') >= 0 && testH.indexOf('test') >= 0) {
+      headerRowIdx = h;
+      break;
+    }
+  }
+  if (headerRowIdx < 0) {
+    alert('CSV must have columns: Date, Test, Value (and optionally Notes).');
+    return;
+  }
+  var headers = csvRows[headerRowIdx].map(function(h) { return h.toLowerCase().trim(); });
   var dateIdx = headers.indexOf('date');
   var testIdx = headers.indexOf('test');
   var valIdx = headers.indexOf('value');
@@ -1429,8 +1442,8 @@ function importLabResults(text) {
     return;
   }
   var count = 0;
-  for (var i = 1; i < rows.length; i++) {
-    var r = rows[i];
+  for (var i = headerRowIdx + 1; i < csvRows.length; i++) {
+    var r = csvRows[i];
     if (r.length < 3) continue;
     var testKey = resolveTestKey(r[testIdx]);
     if (!testKey) continue;
