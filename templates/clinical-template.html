@@ -953,6 +953,9 @@ function readCsvFile(file, handler) {
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
     extractTextFromPDF(file, function(text) {
+      // DEBUG: show what was extracted
+      var hasMarker = text.indexOf('WHTALIFE') >= 0;
+      alert('PDF text extracted: ' + text.length + ' characters. Contains WHTALIFE marker: ' + hasMarker + '\n\nFirst 500 chars:\n' + text.substring(0, 500));
       // Check for embedded structured data
       var cleanText = text.replace(/[\s,]+/g, '');
       var match = cleanText.match(/WHTALIFEDATASTART[:\s]*([A-Za-z0-9+\/=]+)[:\s]*WHTALIFEDATAEND/);
