@@ -973,9 +973,18 @@ function readCsvFile(file, handler) {
       }
       if (match) {
         try {
-          alert('DEBUG: Marker found. B64 length: ' + match[1].length + '\nFirst 80 chars: ' + match[1].substring(0, 80) + '\nLast 80 chars: ' + match[1].substring(match[1].length - 80));
-          var jsonStr = decodeURIComponent(escape(atob(match[1])));
-          var data = JSON.parse(jsonStr);
+          var decoded = '';
+          try {
+            decoded = decodeURIComponent(escape(atob(match[1])));
+          } catch(e1) {
+            // Try without the URI decode wrapper
+            try { decoded = atob(match[1]); } catch(e2) {
+              alert('DEBUG: atob failed: ' + e2.message);
+              handler(text);
+              return;
+            }
+          }
+          var data = JSON.parse(decoded);
           if (data.type === 'whtalife-clinical' || (data.diagnoses && Array.isArray(data.diagnoses))) {
             // Clear existing diagnoses
             document.querySelectorAll('.dx').forEach(function(el) { el.remove(); });
