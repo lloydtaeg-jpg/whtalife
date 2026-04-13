@@ -963,12 +963,17 @@ function readCsvFile(file, handler) {
       var startIdx = cleanText.indexOf(startMarker.replace(/[\s,]+/g, ''));
       var endIdx = cleanText.indexOf(endMarker.replace(/[\s,]+/g, ''));
       var match = null;
+      var cleanedStartMarker = startMarker.replace(/[\s,]+/g, '');
+      var cleanedEndMarker = endMarker.replace(/[\s,]+/g, '');
       if (startIdx >= 0 && endIdx > startIdx) {
-        var b64 = cleanText.substring(startIdx + startMarker.replace(/[\s,]+/g, '').length, endIdx);
+        var b64 = cleanText.substring(startIdx + cleanedStartMarker.length, endIdx);
+        // Remove any remaining non-base64 characters
+        b64 = b64.replace(/[^A-Za-z0-9+\/=]/g, '');
         match = [null, b64];
       }
       if (match) {
         try {
+          alert('DEBUG: Marker found. B64 length: ' + match[1].length + '\nFirst 80 chars: ' + match[1].substring(0, 80) + '\nLast 80 chars: ' + match[1].substring(match[1].length - 80));
           var jsonStr = decodeURIComponent(escape(atob(match[1])));
           var data = JSON.parse(jsonStr);
           if (data.type === 'whtalife-clinical' || (data.diagnoses && Array.isArray(data.diagnoses))) {
@@ -1042,7 +1047,7 @@ function readCsvFile(file, handler) {
             alert('This PDF does not appear to contain WhtaLife clinical data.');
           }
         } catch(err) {
-          console.error('Embedded data decode failed, falling back to text parse', err);
+          alert('DEBUG: Decode failed: ' + err.message);
           handler(text);
         }
       } else {
