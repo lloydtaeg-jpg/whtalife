@@ -405,6 +405,10 @@
 </div>
 
 <div class="action-bar">
+  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export for Editing
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -599,6 +603,37 @@ function downloadJSON(data, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function exportForEditing() {
+  var data = {
+    type: 'whtalife-client',
+    clientName: document.querySelector('.client-bar .name').textContent,
+    date: document.querySelector('.client-bar .date').textContent,
+    cards: []
+  };
+  document.querySelectorAll('.card').forEach(function(card) {
+    var c = {
+      icon: card.dataset.icon,
+      iconCls: card.dataset.iconCls,
+      category: card.dataset.category || 'heart',
+      priority: card.querySelector('.badge').classList.contains('high') ? 'high' : card.querySelector('.badge').classList.contains('medium') ? 'medium' : 'monitor',
+      title: card.querySelector('.card-title').textContent,
+      subtitle: card.querySelector('.card-sub').textContent,
+      context: card.querySelector('.context').textContent,
+      goals: [],
+      actions: [],
+      eval: card.querySelector('.eval').textContent
+    };
+    card.querySelectorAll('.goals li span').forEach(function(s) { c.goals.push(s.textContent); });
+    card.querySelectorAll('.action-items li span').forEach(function(s) { c.actions.push(s.textContent); });
+    data.cards.push(c);
+  });
+  var nameEl = document.querySelector('.client-bar .name');
+  var patientName = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
+  var filename = 'Patient_Care_Plan_Export_' + patientName + '.json';
+  downloadJSON(data, filename);
+  alert('Exported ' + data.cards.length + ' care plan cards.');
 }
 
 function downloadPDF() {

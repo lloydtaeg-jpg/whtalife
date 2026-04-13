@@ -476,6 +476,10 @@
 </div>
 
 <div class="action-bar">
+  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export for Editing
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -969,6 +973,19 @@ function downloadJSON(data, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function exportForEditing() {
+  var meta = {};
+  document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
+    meta['m' + i] = el.textContent;
+  });
+  var data = { type: 'whtalife-vitals', rows: rows, meta: meta };
+  var nameEl = document.querySelector('.meta-row [contenteditable]');
+  var patientName = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Vital_Signs';
+  var filename = 'Vitals_Export_' + patientName + '.json';
+  downloadJSON(data, filename);
+  alert('Exported ' + rows.length + ' vitals entries.');
 }
 
 function downloadPDF() {

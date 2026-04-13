@@ -389,6 +389,10 @@
 </div>
 
 <div class="action-bar">
+  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export for Editing
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -518,6 +522,31 @@ function downloadJSON(data, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function exportForEditing() {
+  var data = { type: 'whtalife-clinical', meta: {}, diagnoses: [] };
+  document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
+    data.meta[el.dataset.ph] = el.textContent;
+  });
+  document.querySelectorAll('.dx').forEach(function(dx) {
+    var d = {
+      priority: dx.dataset.priority,
+      title: dx.querySelector('.dx-title').textContent,
+      statement: dx.querySelector('.dx-statement').textContent,
+      goals: [],
+      interventions: [],
+      evaluation: dx.querySelector('.dx-eval').textContent
+    };
+    dx.querySelectorAll('.dx-goals li span').forEach(function(s) { d.goals.push(s.textContent); });
+    dx.querySelectorAll('.dx-interventions li span').forEach(function(s) { d.interventions.push(s.textContent); });
+    data.diagnoses.push(d);
+  });
+  var patient = document.querySelector('.meta-bar [contenteditable]');
+  var patientName = patient ? patient.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
+  var filename = 'Nursing_Care_Plan_Export_' + patientName + '.json';
+  downloadJSON(data, filename);
+  alert('Exported ' + data.diagnoses.length + ' diagnoses.');
 }
 
 function downloadPDF() {
