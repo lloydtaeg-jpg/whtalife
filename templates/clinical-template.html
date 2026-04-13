@@ -365,6 +365,7 @@
     .container { padding: 0.5rem 1rem 0; }
     .priority-divider { margin: 1rem 0 0.75rem; }
     [contenteditable] { border-bottom: none !important; }
+    #whtalife-data { display: block !important; visibility: visible !important; page-break-before: always; }
   }
 
   @media (max-width: 700px) {
@@ -654,9 +655,10 @@ function downloadPDF() {
   // Create a print-visible element with the data - must be real visible text for PDF capture
   var dataDiv = document.createElement('div');
   dataDiv.id = 'whtalife-data';
-  dataDiv.style.cssText = 'page-break-before:always;font-size:6px;line-height:8px;color:#cccccc;word-break:break-all;overflow-wrap:break-word;padding:10px;margin:0;font-family:monospace;';
+  dataDiv.style.cssText = 'page-break-before:always;font-size:6px;line-height:8px;color:#000000;word-break:break-all;overflow-wrap:break-word;padding:10px;margin-top:20px;font-family:monospace;';
   dataDiv.innerHTML = '<p style="font-size:11px;color:#333;margin-bottom:6px;font-weight:bold;">WhtaLife Document Data — Do Not Remove This Page</p>' + 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
-  document.body.appendChild(dataDiv);
+  var container = document.querySelector('.container') || document.body;
+  container.appendChild(dataDiv);
 
   setTimeout(function() {
     window.print();
