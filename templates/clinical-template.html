@@ -223,6 +223,52 @@
   }
 
   /* Priority dividers */
+  /* Table of Contents */
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    display: none;
+  }
+  .toc.has-items { display: block; }
+  .toc h2 {
+    font-family: 'Lora', serif;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--aegean-dark);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-light, #E8EDEA);
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: column;
+    gap: 0.2rem 2rem;
+  }
+  .toc-item {
+    display: flex; align-items: baseline; gap: 0.5rem;
+    font-size: 0.76rem; color: var(--text-mid);
+    padding: 0.2rem 0;
+    text-decoration: none;
+  }
+  .toc-item:hover { color: var(--aegean-dark); }
+  .toc-num {
+    font-weight: 600; color: var(--aegean-dark);
+    min-width: 1.5rem;
+  }
+  .toc-badge {
+    font-size: 0.55rem; font-weight: 600;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    margin-left: auto; flex-shrink: 0;
+  }
+  .toc-badge.high { background: var(--accent-red-bg); color: var(--accent-red); }
+  .toc-badge.medium { background: var(--accent-amber-bg); color: var(--accent-amber); }
+  .toc-badge.monitor { background: var(--accent-green-bg); color: var(--accent-green); }
+
   .priority-divider {
     display: flex; align-items: center; gap: 0.75rem;
     margin: 1.5rem 0 1rem;
@@ -374,6 +420,11 @@
     <input type="file" accept=".csv,.json,.pdf" id="csvFileClinical">
   </div>
 
+  <div class="toc" id="tocContainer">
+    <h2>Nursing Diagnoses Index</h2>
+    <div class="toc-grid" id="tocGrid"></div>
+  </div>
+
   <div class="priority-divider"><span>High Priority</span></div>
   <div id="highGroup"></div>
   <button class="add-dx-btn" onclick="addDx('high')">+ Add High Priority Diagnosis</button>
@@ -510,6 +561,49 @@ function renumber() {
 
 function updateCount() {
   document.getElementById('dxCount').textContent = document.querySelectorAll('.dx').length;
+  buildTOC();
+}
+
+function buildTOC() {
+  var tocContainer = document.getElementById('tocContainer');
+  var tocGrid = document.getElementById('tocGrid');
+  var allDx = document.querySelectorAll('.dx');
+
+  if (allDx.length === 0) {
+    tocContainer.classList.remove('has-items');
+    tocGrid.innerHTML = '';
+    return;
+  }
+
+  tocContainer.classList.add('has-items');
+  var rows = Math.ceil(allDx.length / 2);
+  tocGrid.style.gridTemplateRows = 'repeat(' + rows + ', auto)';
+
+  var html = '';
+  allDx.forEach(function(dx, i) {
+    var num = i + 1;
+    var title = dx.querySelector('.dx-title') ? dx.querySelector('.dx-title').textContent.trim() : 'Untitled';
+    var priority = dx.dataset.priority || 'medium';
+    var badge = dx.querySelector('.dx-badge');
+    if (badge) {
+      if (badge.classList.contains('high')) priority = 'high';
+      else if (badge.classList.contains('monitor')) priority = 'monitor';
+      else priority = 'medium';
+    }
+    var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
+    html += '<a class="toc-item" href="#dx_' + num + '" onclick="scrollToDx(event,' + i + ')">' +
+      '<span class="toc-num">' + num + '</span>' +
+      title +
+      '<span class="toc-badge ' + priority + '">' + labels[priority] + '</span>' +
+      '</a>';
+  });
+  tocGrid.innerHTML = html;
+}
+
+function scrollToDx(e, idx) {
+  e.preventDefault();
+  var allDx = document.querySelectorAll('.dx');
+  if (allDx[idx]) allDx[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function downloadJSON(data, filename) {
