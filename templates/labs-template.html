@@ -1359,11 +1359,19 @@ function downloadPDF() {
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
+    var safetyTimer = setTimeout(function() {
+      hideEls.forEach(function(el) { el.style.visibility = ''; });
+      var dd = document.getElementById('whtalife-data');
+      if (dd) dd.remove();
+    }, 15000);
+
     html2pdf().set(opt).from(element).save().then(function() {
+      clearTimeout(safetyTimer);
       var dd = document.getElementById('whtalife-data');
       if (dd) dd.remove();
       hideEls.forEach(function(el) { el.style.visibility = ''; });
     }).catch(function(err) {
+      clearTimeout(safetyTimer);
       var dd = document.getElementById('whtalife-data');
       if (dd) dd.remove();
       hideEls.forEach(function(el) { el.style.visibility = ''; });

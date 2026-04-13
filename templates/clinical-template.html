@@ -634,11 +634,7 @@ function downloadPDF() {
   var name = patient ? patient.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
   var filename = 'Nursing_Care_Plan_' + name + '.pdf';
 
-  // Hide UI elements during capture
-  var hideEls = document.querySelectorAll('.action-bar, .add-dx-btn, .add-item-btn, .remove-btn, .remove-li, .save-indicator, .csv-drop');
-  hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
-
-  // Embed structured data in the PDF
+  // Build the embedded data FIRST before hiding anything
   var data = { type: 'whtalife-clinical', meta: {}, diagnoses: [] };
   document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
     data.meta[el.dataset.ph] = el.textContent;
@@ -664,6 +660,17 @@ function downloadPDF() {
   dataDiv.textContent = 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
   document.body.appendChild(dataDiv);
 
+  // Hide UI elements during capture
+  var hideEls = document.querySelectorAll('.action-bar, .add-dx-btn, .add-item-btn, .remove-btn, .remove-li, .save-indicator, .csv-drop');
+  hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
+
+  // Safety: always restore buttons after 15 seconds no matter what
+  var safetyTimer = setTimeout(function() {
+    hideEls.forEach(function(el) { el.style.visibility = ''; });
+    var dd = document.getElementById('whtalife-data');
+    if (dd) dd.remove();
+  }, 15000);
+
   var element = document.body;
   var opt = {
     margin: [10, 10, 10, 10],
@@ -675,10 +682,12 @@ function downloadPDF() {
   };
 
   html2pdf().set(opt).from(element).save().then(function() {
+    clearTimeout(safetyTimer);
     var dd = document.getElementById('whtalife-data');
     if (dd) dd.remove();
     hideEls.forEach(function(el) { el.style.visibility = ''; });
   }).catch(function(err) {
+    clearTimeout(safetyTimer);
     var dd = document.getElementById('whtalife-data');
     if (dd) dd.remove();
     hideEls.forEach(function(el) { el.style.visibility = ''; });
