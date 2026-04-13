@@ -476,10 +476,6 @@
 </div>
 
 <div class="action-bar">
-  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Export for Editing
-  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -975,19 +971,6 @@ function downloadJSON(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-function exportForEditing() {
-  var meta = {};
-  document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
-    meta['m' + i] = el.textContent;
-  });
-  var data = { type: 'whtalife-vitals', rows: rows, meta: meta };
-  var nameEl = document.querySelector('.meta-row [contenteditable]');
-  var patientName = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Vital_Signs';
-  var filename = 'Vitals_Export_' + patientName + '.json';
-  downloadJSON(data, filename);
-  alert('Exported ' + rows.length + ' vitals entries.');
-}
-
 function downloadPDF() {
   var nameEl = document.querySelector('.meta-row [contenteditable]');
   var name = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Vital_Signs';
@@ -995,6 +978,20 @@ function downloadPDF() {
 
   var hideEls = document.querySelectorAll('.action-bar, .add-row-btn, .clear-btn, .row-remove, .save-indicator, .csv-drop');
   hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
+
+  // Embed structured data in the PDF
+  var meta = {};
+  document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
+    meta['m' + i] = el.textContent;
+  });
+  var data = { type: 'whtalife-vitals', rows: rows, meta: meta };
+  var jsonStr = JSON.stringify(data);
+  var b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+  var dataDiv = document.createElement('div');
+  dataDiv.id = 'whtalife-data';
+  dataDiv.style.cssText = 'position:absolute;left:-9999px;overflow:hidden;height:0;width:0;font-size:1px;color:transparent;';
+  dataDiv.textContent = 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
+  document.body.appendChild(dataDiv);
 
   var element = document.body;
   var opt = {
@@ -1007,16 +1004,12 @@ function downloadPDF() {
   };
 
   html2pdf().set(opt).from(element).save().then(function() {
+    var dd = document.getElementById('whtalife-data');
+    if (dd) dd.remove();
     hideEls.forEach(function(el) { el.style.visibility = ''; });
-
-    // Also download JSON data export
-    var meta = {};
-    document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
-      meta['m' + i] = el.textContent;
-    });
-    var jsonFilename = 'Vital_Signs_Data_' + name + '.json';
-    downloadJSON({ type: 'whtalife-vitals', rows: rows, meta: meta }, jsonFilename);
   }).catch(function(err) {
+    var dd = document.getElementById('whtalife-data');
+    if (dd) dd.remove();
     hideEls.forEach(function(el) { el.style.visibility = ''; });
     console.error(err);
     alert('PDF generation failed. Try the Print button instead.');
@@ -1150,7 +1143,37 @@ function readCsvFile(file, handler) {
     };
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-    extractTextFromPDF(file, function(text) { handler(text); });
+    extractTextFromPDF(file, function(text) {
+      // Check for embedded structured data
+      var match = text.match(/WHTALIFE_DATA_START:([A-Za-z0-9+\/=]+):WHTALIFE_DATA_END/);
+      if (match) {
+        try {
+          var jsonStr = decodeURIComponent(escape(atob(match[1])));
+          var data = JSON.parse(jsonStr);
+          if (data.type === 'whtalife-vitals' || (data.rows && Array.isArray(data.rows))) {
+            rows = data.rows || [];
+            if (data.meta) {
+              var fields = document.querySelectorAll('.meta-row [contenteditable]');
+              Object.keys(data.meta).forEach(function(k) {
+                var idx = parseInt(k.substr(1), 10);
+                if (fields[idx]) fields[idx].textContent = data.meta[k];
+              });
+            }
+            renderTable();
+            renderAll();
+            autoSave();
+            alert('PDF data imported: ' + rows.length + ' reading' + (rows.length !== 1 ? 's' : '') + ' restored.');
+          } else {
+            alert('This PDF does not appear to contain WhtaLife vitals data.');
+          }
+        } catch(err) {
+          console.error('Embedded data decode failed, falling back to text parse', err);
+          handler(text);
+        }
+      } else {
+        handler(text);
+      }
+    });
   } else {
     var reader = new FileReader();
     reader.onload = function(e) { handler(e.target.result); };

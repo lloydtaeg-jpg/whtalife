@@ -440,10 +440,6 @@
 </div>
 
 <div class="action-bar">
-  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Export for Editing
-  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -618,7 +614,16 @@ function downloadJSON(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-function exportForEditing() {
+function downloadPDF() {
+  var patient = document.querySelector('.meta-bar [contenteditable]');
+  var name = patient ? patient.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
+  var filename = 'Nursing_Care_Plan_' + name + '.pdf';
+
+  // Hide UI elements during capture
+  var hideEls = document.querySelectorAll('.action-bar, .add-dx-btn, .add-item-btn, .remove-btn, .remove-li, .save-indicator, .csv-drop');
+  hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
+
+  // Embed structured data in the PDF
   var data = { type: 'whtalife-clinical', meta: {}, diagnoses: [] };
   document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
     data.meta[el.dataset.ph] = el.textContent;
@@ -636,21 +641,13 @@ function exportForEditing() {
     dx.querySelectorAll('.dx-interventions li span').forEach(function(s) { d.interventions.push(s.textContent); });
     data.diagnoses.push(d);
   });
-  var patient = document.querySelector('.meta-bar [contenteditable]');
-  var patientName = patient ? patient.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
-  var filename = 'Nursing_Care_Plan_Export_' + patientName + '.json';
-  downloadJSON(data, filename);
-  alert('Exported ' + data.diagnoses.length + ' diagnoses.');
-}
-
-function downloadPDF() {
-  var patient = document.querySelector('.meta-bar [contenteditable]');
-  var name = patient ? patient.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
-  var filename = 'Nursing_Care_Plan_' + name + '.pdf';
-
-  // Hide UI elements during capture
-  var hideEls = document.querySelectorAll('.action-bar, .add-dx-btn, .add-item-btn, .remove-btn, .remove-li, .save-indicator, .csv-drop');
-  hideEls.forEach(function(el) { el.style.visibility = 'hidden'; });
+  var jsonStr = JSON.stringify(data);
+  var b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+  var dataDiv = document.createElement('div');
+  dataDiv.id = 'whtalife-data';
+  dataDiv.style.cssText = 'position:absolute;left:-9999px;overflow:hidden;height:0;width:0;font-size:1px;color:transparent;';
+  dataDiv.textContent = 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
+  document.body.appendChild(dataDiv);
 
   var element = document.body;
   var opt = {
@@ -663,29 +660,12 @@ function downloadPDF() {
   };
 
   html2pdf().set(opt).from(element).save().then(function() {
+    var dd = document.getElementById('whtalife-data');
+    if (dd) dd.remove();
     hideEls.forEach(function(el) { el.style.visibility = ''; });
-
-    // Also download JSON data export
-    var data = { type: 'whtalife-clinical', meta: {}, diagnoses: [] };
-    document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
-      data.meta[el.dataset.ph] = el.textContent;
-    });
-    document.querySelectorAll('.dx').forEach(function(dx) {
-      var d = {
-        priority: dx.dataset.priority,
-        title: dx.querySelector('.dx-title').textContent,
-        statement: dx.querySelector('.dx-statement').textContent,
-        goals: [],
-        interventions: [],
-        evaluation: dx.querySelector('.dx-eval').textContent
-      };
-      dx.querySelectorAll('.dx-goals li span').forEach(function(s) { d.goals.push(s.textContent); });
-      dx.querySelectorAll('.dx-interventions li span').forEach(function(s) { d.interventions.push(s.textContent); });
-      data.diagnoses.push(d);
-    });
-    var jsonFilename = 'Nursing_Care_Plan_Data_' + name + '.json';
-    downloadJSON(data, jsonFilename);
   }).catch(function(err) {
+    var dd = document.getElementById('whtalife-data');
+    if (dd) dd.remove();
     hideEls.forEach(function(el) { el.style.visibility = ''; });
     console.error(err);
     alert('PDF generation failed. Try the Print button instead.');
@@ -979,7 +959,91 @@ function readCsvFile(file, handler) {
     };
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-    extractTextFromPDF(file, function(text) { handler(text); });
+    extractTextFromPDF(file, function(text) {
+      // Check for embedded structured data
+      var match = text.match(/WHTALIFE_DATA_START:([A-Za-z0-9+\/=]+):WHTALIFE_DATA_END/);
+      if (match) {
+        try {
+          var jsonStr = decodeURIComponent(escape(atob(match[1])));
+          var data = JSON.parse(jsonStr);
+          if (data.type === 'whtalife-clinical' || (data.diagnoses && Array.isArray(data.diagnoses))) {
+            // Clear existing diagnoses
+            document.querySelectorAll('.dx').forEach(function(el) { el.remove(); });
+            dxCounter = 0;
+
+            // Restore meta
+            if (data.meta) {
+              document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
+                if (data.meta[el.dataset.ph]) el.textContent = data.meta[el.dataset.ph];
+              });
+            }
+
+            // Restore diagnoses
+            if (data.diagnoses && data.diagnoses.length > 0) {
+              data.diagnoses.forEach(function(d) {
+                dxCounter++;
+                var group = document.getElementById(d.priority === 'high' ? 'highGroup' : d.priority === 'medium' ? 'mediumGroup' : 'monitorGroup');
+                var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
+
+                var goalsHtml = '';
+                d.goals.forEach(function(g) {
+                  goalsHtml += '<li><span contenteditable="true" data-ph="Goal">' + esc(g) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
+                });
+
+                var intervHtml = '';
+                d.interventions.forEach(function(v) {
+                  intervHtml += '<li><span contenteditable="true" data-ph="Intervention">' + esc(v) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
+                });
+
+                var div = document.createElement('div');
+                div.className = 'dx';
+                div.dataset.priority = d.priority;
+                div.innerHTML =
+                  '<button class="remove-btn" onclick="removeDx(this)" title="Remove diagnosis">&times;</button>' +
+                  '<div class="dx-header">' +
+                    '<div class="dx-num">' + dxCounter + '</div>' +
+                    '<div class="dx-title" contenteditable="true" data-ph="Diagnosis Title">' + esc(d.title) + '</div>' +
+                    '<span class="dx-badge ' + d.priority + '" onclick="cyclePriority(this)" title="Click to change priority">' + labels[d.priority] + '</span>' +
+                  '</div>' +
+                  '<div class="dx-body">' +
+                    '<div class="dx-section">' +
+                      '<div class="dx-label">Nursing Diagnosis</div>' +
+                      '<div class="dx-statement" contenteditable="true" data-ph="Full NANDA diagnosis statement...">' + esc(d.statement) + '</div>' +
+                    '</div>' +
+                    '<div class="dx-section">' +
+                      '<div class="dx-label">Goals</div>' +
+                      '<ul class="dx-goals" id="goals_' + dxCounter + '">' + goalsHtml + '</ul>' +
+                      '<button class="add-item-btn" onclick="addItem(\'goals_' + dxCounter + '\', \'Goal\')">+ Add Goal</button>' +
+                    '</div>' +
+                    '<div class="dx-section">' +
+                      '<div class="dx-label">Interventions</div>' +
+                      '<ul class="dx-interventions" id="interv_' + dxCounter + '">' + intervHtml + '</ul>' +
+                      '<button class="add-item-btn" onclick="addItem(\'interv_' + dxCounter + '\', \'Intervention\')">+ Add Intervention</button>' +
+                    '</div>' +
+                    '<div class="dx-section">' +
+                      '<div class="dx-label">Evaluation</div>' +
+                      '<div class="dx-eval" contenteditable="true" data-ph="Evaluation criteria...">' + esc(d.evaluation) + '</div>' +
+                    '</div>' +
+                  '</div>';
+
+                group.appendChild(div);
+              });
+            }
+
+            updateCount();
+            autoSave();
+            alert('PDF data imported: ' + (data.diagnoses ? data.diagnoses.length : 0) + ' diagnosis/diagnoses restored.');
+          } else {
+            alert('This PDF does not appear to contain WhtaLife clinical data.');
+          }
+        } catch(err) {
+          console.error('Embedded data decode failed, falling back to text parse', err);
+          handler(text);
+        }
+      } else {
+        handler(text);
+      }
+    });
   } else {
     var reader = new FileReader();
     reader.onload = function(e) { handler(e.target.result); };
