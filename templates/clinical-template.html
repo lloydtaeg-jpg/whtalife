@@ -651,11 +651,11 @@ function downloadPDF() {
   var jsonStr = JSON.stringify(data);
   var b64 = btoa(unescape(encodeURIComponent(jsonStr)));
 
-  // Create a visible-to-print element with the data encoded as tiny white text
+  // Create a print-visible element with the data - must be real visible text for PDF capture
   var dataDiv = document.createElement('div');
   dataDiv.id = 'whtalife-data';
-  dataDiv.style.cssText = 'page-break-before:always;font-size:4px;line-height:4px;color:#ffffff;background:#ffffff;word-break:break-all;overflow-wrap:break-word;padding:2px;margin:0;';
-  dataDiv.textContent = 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
+  dataDiv.style.cssText = 'page-break-before:always;font-size:6px;line-height:8px;color:#cccccc;word-break:break-all;overflow-wrap:break-word;padding:10px;margin:0;font-family:monospace;';
+  dataDiv.innerHTML = '<p style="font-size:11px;color:#333;margin-bottom:6px;font-weight:bold;">WhtaLife Document Data — Do Not Remove This Page</p>' + 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
   document.body.appendChild(dataDiv);
 
   setTimeout(function() {
@@ -953,6 +953,9 @@ function readCsvFile(file, handler) {
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
     extractTextFromPDF(file, function(text) {
+      // DEBUG
+      var hasMarker = text.indexOf('WHTALIFE') >= 0;
+      alert('PDF extracted ' + text.length + ' chars. Marker found: ' + hasMarker + '\n\nLast 200 chars:\n' + text.substring(text.length - 200));
       // Check for embedded structured data
       var cleanText = text.replace(/[\s,]+/g, '');
       var match = cleanText.match(/WHTALIFEDATASTART[:\s]*([A-Za-z0-9+\/=]+)[:\s]*WHTALIFEDATAEND/);
