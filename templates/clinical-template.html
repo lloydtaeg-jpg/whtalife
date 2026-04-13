@@ -955,12 +955,18 @@ function readCsvFile(file, handler) {
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
     extractTextFromPDF(file, function(text) {
-      // DEBUG
-      var hasMarker = text.indexOf('WHTALIFE') >= 0;
-      alert('PDF extracted ' + text.length + ' chars. Marker found: ' + hasMarker + '\n\nLast 200 chars:\n' + text.substring(text.length - 200));
-      // Check for embedded structured data
-      var cleanText = text.replace(/[\s,]+/g, '');
-      var match = cleanText.match(/WHTALIFEDATASTART[:\s]*([A-Za-z0-9+\/=]+)[:\s]*WHTALIFEDATAEND/);
+      // Check for embedded structured data — strip all whitespace, commas, newlines
+      var cleanText = text.replace(/[\s,\n\r]+/g, '');
+      // Extract everything between the markers
+      var startMarker = 'WHTALIFE_DATA_START:';
+      var endMarker = ':WHTALIFE_DATA_END';
+      var startIdx = cleanText.indexOf(startMarker.replace(/[\s,]+/g, ''));
+      var endIdx = cleanText.indexOf(endMarker.replace(/[\s,]+/g, ''));
+      var match = null;
+      if (startIdx >= 0 && endIdx > startIdx) {
+        var b64 = cleanText.substring(startIdx + startMarker.replace(/[\s,]+/g, '').length, endIdx);
+        match = [null, b64];
+      }
       if (match) {
         try {
           var jsonStr = decodeURIComponent(escape(atob(match[1])));
