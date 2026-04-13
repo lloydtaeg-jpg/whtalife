@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WhtaLife — Patient Care Plan Builder</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -395,9 +397,9 @@
 
 <div class="cards" id="cardsContainer">
   <div class="csv-drop" id="csvDropClient">
-    Drop a <strong>Care Plan CSV</strong> here or click to browse
-    <br><small>Columns: Title, Subtitle, Category, Priority, Context, Goals (semicolon-separated), Actions (semicolon-separated), Evaluation</small>
-    <input type="file" accept=".csv" id="csvFileClient">
+    Drop a <strong>Care Plan CSV, PDF, or JSON</strong> here or click to browse
+    <br><small>CSV columns: Title, Subtitle, Category, Priority, Context, Goals, Actions, Evaluation</small>
+    <input type="file" accept=".csv,.json,.pdf" id="csvFileClient">
   </div>
   <button class="add-card-btn" onclick="addCard()">+ Add Care Focus Area</button>
 </div>
@@ -587,6 +589,18 @@ function esc(str) {
   return d.innerHTML;
 }
 
+function downloadJSON(data, filename) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function downloadPDF() {
   // Open all cards so the full plan is captured
   document.querySelectorAll('.card').forEach(function(c) { c.classList.add('open'); });
@@ -612,6 +626,33 @@ function downloadPDF() {
 
     html2pdf().set(opt).from(element).save().then(function() {
       hideEls.forEach(function(el) { el.style.visibility = ''; });
+
+      // Also download JSON data export
+      var data = {
+        type: 'whtalife-client',
+        clientName: document.querySelector('.client-bar .name').textContent,
+        date: document.querySelector('.client-bar .date').textContent,
+        cards: []
+      };
+      document.querySelectorAll('.card').forEach(function(card) {
+        var c = {
+          icon: card.dataset.icon,
+          iconCls: card.dataset.iconCls,
+          category: card.dataset.category || 'heart',
+          priority: card.querySelector('.badge').classList.contains('high') ? 'high' : card.querySelector('.badge').classList.contains('medium') ? 'medium' : 'monitor',
+          title: card.querySelector('.card-title').textContent,
+          subtitle: card.querySelector('.card-sub').textContent,
+          context: card.querySelector('.context').textContent,
+          goals: [],
+          actions: [],
+          eval: card.querySelector('.eval').textContent
+        };
+        card.querySelectorAll('.goals li span').forEach(function(s) { c.goals.push(s.textContent); });
+        card.querySelectorAll('.action-items li span').forEach(function(s) { c.actions.push(s.textContent); });
+        data.cards.push(c);
+      });
+      var jsonFilename = 'Patient_Care_Plan_Data_' + name + '.json';
+      downloadJSON(data, jsonFilename);
     }).catch(function(err) {
       hideEls.forEach(function(el) { el.style.visibility = ''; });
       console.error(err);
@@ -725,10 +766,81 @@ function setupCsvDrop(dropEl, fileInput, handler) {
   });
 }
 
-function readCsvFile(file, handler) {
+function extractTextFromPDF(file, callback) {
   var reader = new FileReader();
-  reader.onload = function(e) { handler(e.target.result); };
-  reader.readAsText(file);
+  reader.onload = function(e) {
+    var typedArray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+      var pageTexts = [];
+      var done = 0;
+      for (var p = 1; p <= pdf.numPages; p++) {
+        (function(pageNum) {
+          pdf.getPage(pageNum).then(function(page) {
+            page.getTextContent().then(function(content) {
+              var lineMap = {};
+              content.items.forEach(function(item) {
+                var y = Math.round(item.transform[5]);
+                if (!lineMap[y]) lineMap[y] = [];
+                lineMap[y].push({ x: item.transform[4], text: item.str });
+              });
+              var yKeys = Object.keys(lineMap).map(Number).sort(function(a,b){return b-a;});
+              var text = '';
+              yKeys.forEach(function(y) {
+                var line = lineMap[y].sort(function(a,b){return a.x - b.x;});
+                var lineStr = line.map(function(it){return it.text.trim();}).join(',');
+                if (lineStr.trim()) text += lineStr + '\n';
+              });
+              pageTexts[pageNum - 1] = text;
+              done++;
+              if (done === pdf.numPages) callback(pageTexts.join('\n'));
+            });
+          });
+        })(p);
+      }
+    }).catch(function(err) {
+      alert('Could not read the PDF. Make sure it is a text-based PDF, not a scanned image.');
+      console.error(err);
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function readCsvFile(file, handler) {
+  if (file.name.toLowerCase().endsWith('.json') || file.type === 'application/json') {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (data.type === 'whtalife-client' || (data.cards && Array.isArray(data.cards))) {
+          // Clear existing cards
+          document.querySelectorAll('.card').forEach(function(el) { el.remove(); });
+
+          // Restore client name and date
+          if (data.clientName) document.querySelector('.client-bar .name').textContent = data.clientName;
+          if (data.date) document.querySelector('.client-bar .date').textContent = data.date;
+
+          // Restore cards
+          if (data.cards && data.cards.length > 0) {
+            data.cards.forEach(function(c) { addCard(c); });
+          }
+
+          autoSave();
+          alert('JSON data imported: ' + (data.cards ? data.cards.length : 0) + ' care card' + ((data.cards && data.cards.length !== 1) ? 's' : '') + ' restored.');
+        } else {
+          alert('This JSON file does not appear to be a WhtaLife client care plan export.');
+        }
+      } catch(err) {
+        alert('Could not parse JSON file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+    extractTextFromPDF(file, function(text) { handler(text); });
+  } else {
+    var reader = new FileReader();
+    reader.onload = function(e) { handler(e.target.result); };
+    reader.readAsText(file);
+  }
 }
 
 var CATEGORY_ICON_MAP = {

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WhtaLife — Clinical Care Plan Builder</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -367,9 +369,9 @@
 <div class="container" id="container">
 
   <div class="csv-drop" id="csvDropClinical">
-    Drop a <strong>Care Plan CSV</strong> here or click to browse
-    <br><small>Columns: Priority, Title, Diagnosis, Goals (semicolon-separated), Interventions (semicolon-separated), Evaluation</small>
-    <input type="file" accept=".csv" id="csvFileClinical">
+    Drop a <strong>Care Plan CSV, PDF, or JSON</strong> here or click to browse
+    <br><small>CSV columns: Priority, Title, Diagnosis, Goals, Interventions, Evaluation</small>
+    <input type="file" accept=".csv,.json,.pdf" id="csvFileClinical">
   </div>
 
   <div class="priority-divider"><span>High Priority</span></div>
@@ -506,6 +508,18 @@ function updateCount() {
   document.getElementById('dxCount').textContent = document.querySelectorAll('.dx').length;
 }
 
+function downloadJSON(data, filename) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function downloadPDF() {
   var patient = document.querySelector('.meta-bar [contenteditable]');
   var name = patient ? patient.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Care_Plan';
@@ -527,6 +541,27 @@ function downloadPDF() {
 
   html2pdf().set(opt).from(element).save().then(function() {
     hideEls.forEach(function(el) { el.style.visibility = ''; });
+
+    // Also download JSON data export
+    var data = { type: 'whtalife-clinical', meta: {}, diagnoses: [] };
+    document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
+      data.meta[el.dataset.ph] = el.textContent;
+    });
+    document.querySelectorAll('.dx').forEach(function(dx) {
+      var d = {
+        priority: dx.dataset.priority,
+        title: dx.querySelector('.dx-title').textContent,
+        statement: dx.querySelector('.dx-statement').textContent,
+        goals: [],
+        interventions: [],
+        evaluation: dx.querySelector('.dx-eval').textContent
+      };
+      dx.querySelectorAll('.dx-goals li span').forEach(function(s) { d.goals.push(s.textContent); });
+      dx.querySelectorAll('.dx-interventions li span').forEach(function(s) { d.interventions.push(s.textContent); });
+      data.diagnoses.push(d);
+    });
+    var jsonFilename = 'Nursing_Care_Plan_Data_' + name + '.json';
+    downloadJSON(data, jsonFilename);
   }).catch(function(err) {
     hideEls.forEach(function(el) { el.style.visibility = ''; });
     console.error(err);
@@ -700,10 +735,133 @@ function setupCsvDrop(dropEl, fileInput, handler) {
   });
 }
 
-function readCsvFile(file, handler) {
+function extractTextFromPDF(file, callback) {
   var reader = new FileReader();
-  reader.onload = function(e) { handler(e.target.result); };
-  reader.readAsText(file);
+  reader.onload = function(e) {
+    var typedArray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+      var pageTexts = [];
+      var done = 0;
+      for (var p = 1; p <= pdf.numPages; p++) {
+        (function(pageNum) {
+          pdf.getPage(pageNum).then(function(page) {
+            page.getTextContent().then(function(content) {
+              var lineMap = {};
+              content.items.forEach(function(item) {
+                var y = Math.round(item.transform[5]);
+                if (!lineMap[y]) lineMap[y] = [];
+                lineMap[y].push({ x: item.transform[4], text: item.str });
+              });
+              var yKeys = Object.keys(lineMap).map(Number).sort(function(a,b){return b-a;});
+              var text = '';
+              yKeys.forEach(function(y) {
+                var line = lineMap[y].sort(function(a,b){return a.x - b.x;});
+                var lineStr = line.map(function(it){return it.text.trim();}).join(',');
+                if (lineStr.trim()) text += lineStr + '\n';
+              });
+              pageTexts[pageNum - 1] = text;
+              done++;
+              if (done === pdf.numPages) callback(pageTexts.join('\n'));
+            });
+          });
+        })(p);
+      }
+    }).catch(function(err) {
+      alert('Could not read the PDF. Make sure it is a text-based PDF, not a scanned image.');
+      console.error(err);
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function readCsvFile(file, handler) {
+  if (file.name.toLowerCase().endsWith('.json') || file.type === 'application/json') {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (data.type === 'whtalife-clinical' || (data.diagnoses && Array.isArray(data.diagnoses))) {
+          // Clear existing diagnoses
+          document.querySelectorAll('.dx').forEach(function(el) { el.remove(); });
+          dxCounter = 0;
+
+          // Restore meta
+          if (data.meta) {
+            document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
+              if (data.meta[el.dataset.ph]) el.textContent = data.meta[el.dataset.ph];
+            });
+          }
+
+          // Restore diagnoses (same pattern as loadSaved)
+          if (data.diagnoses && data.diagnoses.length > 0) {
+            data.diagnoses.forEach(function(d) {
+              dxCounter++;
+              var group = document.getElementById(d.priority === 'high' ? 'highGroup' : d.priority === 'medium' ? 'mediumGroup' : 'monitorGroup');
+              var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
+
+              var goalsHtml = '';
+              d.goals.forEach(function(g) {
+                goalsHtml += '<li><span contenteditable="true" data-ph="Goal">' + esc(g) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
+              });
+
+              var intervHtml = '';
+              d.interventions.forEach(function(v) {
+                intervHtml += '<li><span contenteditable="true" data-ph="Intervention">' + esc(v) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
+              });
+
+              var div = document.createElement('div');
+              div.className = 'dx';
+              div.dataset.priority = d.priority;
+              div.innerHTML =
+                '<button class="remove-btn" onclick="removeDx(this)" title="Remove diagnosis">&times;</button>' +
+                '<div class="dx-header">' +
+                  '<div class="dx-num">' + dxCounter + '</div>' +
+                  '<div class="dx-title" contenteditable="true" data-ph="Diagnosis Title">' + esc(d.title) + '</div>' +
+                  '<span class="dx-badge ' + d.priority + '" onclick="cyclePriority(this)" title="Click to change priority">' + labels[d.priority] + '</span>' +
+                '</div>' +
+                '<div class="dx-body">' +
+                  '<div class="dx-section">' +
+                    '<div class="dx-label">Nursing Diagnosis</div>' +
+                    '<div class="dx-statement" contenteditable="true" data-ph="Full NANDA diagnosis statement...">' + esc(d.statement) + '</div>' +
+                  '</div>' +
+                  '<div class="dx-section">' +
+                    '<div class="dx-label">Goals</div>' +
+                    '<ul class="dx-goals" id="goals_' + dxCounter + '">' + goalsHtml + '</ul>' +
+                    '<button class="add-item-btn" onclick="addItem(\'goals_' + dxCounter + '\', \'Goal\')">+ Add Goal</button>' +
+                  '</div>' +
+                  '<div class="dx-section">' +
+                    '<div class="dx-label">Interventions</div>' +
+                    '<ul class="dx-interventions" id="interv_' + dxCounter + '">' + intervHtml + '</ul>' +
+                    '<button class="add-item-btn" onclick="addItem(\'interv_' + dxCounter + '\', \'Intervention\')">+ Add Intervention</button>' +
+                  '</div>' +
+                  '<div class="dx-section">' +
+                    '<div class="dx-label">Evaluation</div>' +
+                    '<div class="dx-eval" contenteditable="true" data-ph="Evaluation criteria...">' + esc(d.evaluation) + '</div>' +
+                  '</div>' +
+                '</div>';
+
+              group.appendChild(div);
+            });
+          }
+
+          updateCount();
+          autoSave();
+          alert('JSON data imported: ' + (data.diagnoses ? data.diagnoses.length : 0) + ' diagnosis/diagnoses restored.');
+        } else {
+          alert('This JSON file does not appear to be a WhtaLife clinical export.');
+        }
+      } catch(err) {
+        alert('Could not parse JSON file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+    extractTextFromPDF(file, function(text) { handler(text); });
+  } else {
+    var reader = new FileReader();
+    reader.onload = function(e) { handler(e.target.result); };
+    reader.readAsText(file);
+  }
 }
 
 function importClinical(text) {

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WhtaLife — Lab & Test Results Builder</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -479,9 +481,9 @@
   </div>
 
   <div class="csv-drop" id="csvDropLabs">
-    Drop a <strong>Lab Results CSV</strong> here or click to browse
-    <br><small>Columns: Date, Test, Value, Notes</small>
-    <input type="file" accept=".csv" id="csvFileLabs">
+    Drop a <strong>Lab Results CSV, PDF, or JSON</strong> here or click to browse
+    <br><small>CSV columns: Date, Test, Value, Notes — JSON restores all data</small>
+    <input type="file" accept=".csv,.json,.pdf" id="csvFileLabs">
   </div>
 
   <div class="csv-drop" id="csvDropSwabs">
@@ -1293,6 +1295,18 @@ document.addEventListener('input', function(e) {
 // =====================================================
 // PDF DOWNLOAD
 // =====================================================
+function downloadJSON(data, filename) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function downloadPDF() {
   var nameEl = document.querySelector('.meta-row [contenteditable]');
   var name = nameEl ? nameEl.textContent.trim().replace(/[^a-z0-9]+/gi, '_') : 'Lab_Results';
@@ -1318,6 +1332,14 @@ function downloadPDF() {
 
     html2pdf().set(opt).from(element).save().then(function() {
       hideEls.forEach(function(el) { el.style.visibility = ''; });
+
+      // Also download JSON data export
+      var meta = {};
+      document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
+        meta['m' + i] = el.textContent;
+      });
+      var jsonFilename = 'Lab_Results_Data_' + name + '.json';
+      downloadJSON({ type: 'whtalife-labs', results: results, swabs: swabs, meta: meta }, jsonFilename);
     }).catch(function(err) {
       hideEls.forEach(function(el) { el.style.visibility = ''; });
       console.error(err);
@@ -1410,10 +1432,79 @@ function setupCsvDrop(dropEl, fileInput, handler) {
   });
 }
 
-function readCsvFile(file, handler) {
+function extractTextFromPDF(file, callback) {
   var reader = new FileReader();
-  reader.onload = function(e) { handler(e.target.result); };
-  reader.readAsText(file);
+  reader.onload = function(e) {
+    var typedArray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+      var pageTexts = [];
+      var done = 0;
+      for (var p = 1; p <= pdf.numPages; p++) {
+        (function(pageNum) {
+          pdf.getPage(pageNum).then(function(page) {
+            page.getTextContent().then(function(content) {
+              var lineMap = {};
+              content.items.forEach(function(item) {
+                var y = Math.round(item.transform[5]);
+                if (!lineMap[y]) lineMap[y] = [];
+                lineMap[y].push({ x: item.transform[4], text: item.str });
+              });
+              var yKeys = Object.keys(lineMap).map(Number).sort(function(a,b){return b-a;});
+              var text = '';
+              yKeys.forEach(function(y) {
+                var line = lineMap[y].sort(function(a,b){return a.x - b.x;});
+                var lineStr = line.map(function(it){return it.text.trim();}).join(',');
+                if (lineStr.trim()) text += lineStr + '\n';
+              });
+              pageTexts[pageNum - 1] = text;
+              done++;
+              if (done === pdf.numPages) callback(pageTexts.join('\n'));
+            });
+          });
+        })(p);
+      }
+    }).catch(function(err) {
+      alert('Could not read the PDF. Make sure it is a text-based PDF, not a scanned image.');
+      console.error(err);
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function readCsvFile(file, handler) {
+  if (file.name.toLowerCase().endsWith('.json') || file.type === 'application/json') {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (data.type === 'whtalife-labs' || (data.results && Array.isArray(data.results))) {
+          results = data.results || [];
+          swabs = data.swabs || [];
+          if (data.meta) {
+            var fields = document.querySelectorAll('.meta-row [contenteditable]');
+            Object.keys(data.meta).forEach(function(k) {
+              var idx = parseInt(k.substr(1), 10);
+              if (fields[idx]) fields[idx].textContent = data.meta[k];
+            });
+          }
+          renderAll();
+          autoSave();
+          alert('JSON data imported: ' + results.length + ' lab result' + (results.length !== 1 ? 's' : '') + ' and ' + swabs.length + ' swab' + (swabs.length !== 1 ? 's' : '') + ' restored.');
+        } else {
+          alert('This JSON file does not appear to be a WhtaLife labs export.');
+        }
+      } catch(err) {
+        alert('Could not parse JSON file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+    extractTextFromPDF(file, function(text) { handler(text); });
+  } else {
+    var reader = new FileReader();
+    reader.onload = function(e) { handler(e.target.result); };
+    reader.readAsText(file);
+  }
 }
 
 function importLabResults(text) {
