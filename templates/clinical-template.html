@@ -973,19 +973,14 @@ function readCsvFile(file, handler) {
       }
       if (match) {
         try {
-          // Clean the base64 string thoroughly
-          var b64Clean = match[1].replace(/[^A-Za-z0-9+\/=]/g, '');
-          // Fix padding if needed
-          while (b64Clean.length % 4 !== 0) b64Clean += '=';
+          // Clean the base64 string: keep only valid chars, strip trailing = then re-pad
+          var b64Clean = match[1].replace(/[^A-Za-z0-9+\/]/g, '');
+          // Add correct padding
+          var pad = b64Clean.length % 4;
+          if (pad === 2) b64Clean += '==';
+          else if (pad === 3) b64Clean += '=';
 
-          var decoded = '';
-          try {
-            decoded = atob(b64Clean);
-          } catch(e1) {
-            alert('DEBUG: atob failed on ' + b64Clean.length + ' chars. Error: ' + e1.message + '\nChars 0-20: [' + b64Clean.substring(0,20) + ']\nLast 20: [' + b64Clean.substring(b64Clean.length-20) + ']');
-            handler(text);
-            return;
-          }
+          var decoded = atob(b64Clean);
           // Handle UTF-8
           try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
           var data = JSON.parse(decoded);
