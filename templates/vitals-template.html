@@ -476,6 +476,10 @@
 </div>
 
 <div class="action-bar">
+  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export for Editing
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -986,26 +990,19 @@ function downloadJSON(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-function downloadPDF() {
-  // Embed structured data
+function exportForEditing() {
   var meta = {};
   document.querySelectorAll('.meta-row [contenteditable]').forEach(function(el, i) {
     meta['m' + i] = el.textContent;
   });
   var data = { type: 'whtalife-vitals', rows: rows, meta: meta };
-  var jsonStr = JSON.stringify(data);
-  var b64 = btoa(unescape(encodeURIComponent(jsonStr)));
-  var dataDiv = document.createElement('div');
-  dataDiv.id = 'whtalife-data';
-  dataDiv.style.cssText = 'page-break-before:always;font-size:4px;line-height:4px;color:#ffffff;background:#ffffff;word-break:break-all;overflow-wrap:break-word;padding:2px;margin:0;';
-  dataDiv.textContent = 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
-  document.body.appendChild(dataDiv);
+  var name = (meta.m0 || 'Vitals').replace(/[^a-z0-9]+/gi, '_');
+  downloadJSON(data, 'Vitals_' + name + '.json');
+  alert('Exported ' + rows.length + ' readings. Upload this .json file to the template to edit later.');
+}
 
-  setTimeout(function() {
-    window.print();
-    var dd = document.getElementById('whtalife-data');
-    if (dd) dd.remove();
-  }, 300);
+function downloadPDF() {
+  setTimeout(function() { window.print(); }, 200);
 }
 
 // Set generation date
@@ -1135,53 +1132,7 @@ function readCsvFile(file, handler) {
     };
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-    extractTextFromPDF(file, function(text) {
-      var cleanText = text.replace(/[\s,\n\r]+/g, '');
-      var markerStart = cleanText.indexOf('WHTALIFEDATASTART');
-      var markerEnd = cleanText.indexOf('WHTALIFEDATAEND');
-      if (markerStart < 0) { markerStart = cleanText.indexOf('WHTALIFE_DATA_START'); }
-      if (markerEnd < 0) { markerEnd = cleanText.indexOf('WHTALIFE_DATA_END'); }
-      var match = null;
-      if (markerStart >= 0 && markerEnd > markerStart) {
-        var rawBetween = cleanText.substring(markerStart, markerEnd);
-        var b64Start = rawBetween.indexOf('eyJ');
-        if (b64Start >= 0) {
-          var b64 = rawBetween.substring(b64Start).replace(/[^A-Za-z0-9+\/]/g, '');
-          var mod = b64.length % 4;
-          if (mod === 2) b64 += '==';
-          else if (mod === 3) b64 += '=';
-          match = b64;
-        }
-      }
-      if (match) {
-        try {
-          var decoded = atob(match);
-          try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
-          var data = JSON.parse(decoded);
-          if (data.type === 'whtalife-vitals' || (data.rows && Array.isArray(data.rows))) {
-            rows = data.rows || [];
-            if (data.meta) {
-              var fields = document.querySelectorAll('.meta-row [contenteditable]');
-              Object.keys(data.meta).forEach(function(k) {
-                var idx = parseInt(k.substr(1), 10);
-                if (fields[idx]) fields[idx].textContent = data.meta[k];
-              });
-            }
-            renderTable();
-            renderAll();
-            autoSave();
-            alert('PDF data imported: ' + rows.length + ' reading' + (rows.length !== 1 ? 's' : '') + ' restored.');
-          } else {
-            alert('This PDF does not appear to contain WhtaLife vitals data.');
-          }
-        } catch(err) {
-          console.error('Embedded data decode failed, falling back to text parse', err);
-          handler(text);
-        }
-      } else {
-        handler(text);
-      }
-    });
+    extractTextFromPDF(file, function(text) { handler(text); });
   } else {
     var reader = new FileReader();
     reader.onload = function(e) { handler(e.target.result); };

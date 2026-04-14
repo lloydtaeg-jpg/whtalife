@@ -365,7 +365,6 @@
     .container { padding: 0.5rem 1rem 0; }
     .priority-divider { margin: 1rem 0 0.75rem; }
     [contenteditable] { border-bottom: none !important; }
-    #whtalife-data { display: block !important; visibility: visible !important; page-break-before: always; }
   }
 
   @media (max-width: 700px) {
@@ -441,6 +440,10 @@
 </div>
 
 <div class="action-bar">
+  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export for Editing
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -630,8 +633,7 @@ function downloadJSON(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-function downloadPDF() {
-  // Build the embedded data
+function exportForEditing() {
   var data = { type: 'whtalife-clinical', meta: {}, diagnoses: [] };
   document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
     data.meta[el.dataset.ph] = el.textContent;
@@ -649,22 +651,13 @@ function downloadPDF() {
     dx.querySelectorAll('.dx-interventions li span').forEach(function(s) { d.interventions.push(s.textContent); });
     data.diagnoses.push(d);
   });
-  var jsonStr = JSON.stringify(data);
-  var b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+  var name = (data.meta['Patient Name'] || 'Care_Plan').replace(/[^a-z0-9]+/gi, '_');
+  downloadJSON(data, 'Nursing_Care_Plan_' + name + '.json');
+  alert('Exported ' + data.diagnoses.length + ' diagnoses.');
+}
 
-  // Create a print-visible element with the data - must be real visible text for PDF capture
-  var dataDiv = document.createElement('div');
-  dataDiv.id = 'whtalife-data';
-  dataDiv.style.cssText = 'page-break-before:always;font-size:6px;line-height:8px;color:#000000;word-break:break-all;overflow-wrap:break-word;padding:10px;margin-top:20px;font-family:monospace;';
-  dataDiv.innerHTML = '<p style="font-size:11px;color:#333;margin-bottom:6px;font-weight:bold;">WhtaLife Document Data — Do Not Remove This Page</p>' + 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
-  var container = document.querySelector('.container') || document.body;
-  container.appendChild(dataDiv);
-
-  setTimeout(function() {
-    window.print();
-    var dd = document.getElementById('whtalife-data');
-    if (dd) dd.remove();
-  }, 300);
+function downloadPDF() {
+  setTimeout(function() { window.print(); }, 200);
 }
 
 // Auto-save to localStorage
@@ -954,119 +947,7 @@ function readCsvFile(file, handler) {
     };
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-    extractTextFromPDF(file, function(text) {
-      // Check for embedded structured data
-      // Strip everything except base64 chars and our markers
-      var cleanText = text.replace(/[\s,\n\r]+/g, '');
-      // Find the base64 payload: starts with eyJ (base64 for '{"') after our marker
-      var markerStart = cleanText.indexOf('WHTALIFEDATASTART');
-      var markerEnd = cleanText.indexOf('WHTALIFEDATAEND');
-      if (markerStart < 0) { markerStart = cleanText.indexOf('WHTALIFE_DATA_START'); }
-      if (markerEnd < 0) { markerEnd = cleanText.indexOf('WHTALIFE_DATA_END'); }
-      var match = null;
-      if (markerStart >= 0 && markerEnd > markerStart) {
-        // Get everything between markers
-        var rawBetween = cleanText.substring(markerStart, markerEnd);
-        // Find where the base64 actually starts (eyJ = '{"')
-        var b64Start = rawBetween.indexOf('eyJ');
-        if (b64Start >= 0) {
-          var b64 = rawBetween.substring(b64Start);
-          // Keep only valid base64 characters
-          b64 = b64.replace(/[^A-Za-z0-9+\/]/g, '');
-          // Fix padding
-          var mod = b64.length % 4;
-          if (mod === 2) b64 += '==';
-          else if (mod === 3) b64 += '=';
-          match = b64;
-        }
-      }
-      if (match) {
-        try {
-          // DEBUG: check what we're about to decode
-          var testDecode = false;
-          try { atob(match); testDecode = true; } catch(e) { /* */ }
-          alert('DEBUG:\nB64 length: ' + match.length + '\nMod4: ' + (match.length % 4) + '\natob works: ' + testDecode + '\nFirst 60: ' + match.substring(0,60) + '\nLast 60: ' + match.substring(match.length - 60) + '\nContains non-b64: ' + (match.replace(/[A-Za-z0-9+\/=]/g, '').length > 0 ? 'YES: [' + match.replace(/[A-Za-z0-9+\/=]/g, '').substring(0,20) + ']' : 'no'));
-          var decoded = atob(match);
-          try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
-          var data = JSON.parse(decoded);
-          if (data.type === 'whtalife-clinical' || (data.diagnoses && Array.isArray(data.diagnoses))) {
-            // Clear existing diagnoses
-            document.querySelectorAll('.dx').forEach(function(el) { el.remove(); });
-            dxCounter = 0;
-
-            // Restore meta
-            if (data.meta) {
-              document.querySelectorAll('.meta-bar [contenteditable]').forEach(function(el) {
-                if (data.meta[el.dataset.ph]) el.textContent = data.meta[el.dataset.ph];
-              });
-            }
-
-            // Restore diagnoses
-            if (data.diagnoses && data.diagnoses.length > 0) {
-              data.diagnoses.forEach(function(d) {
-                dxCounter++;
-                var group = document.getElementById(d.priority === 'high' ? 'highGroup' : d.priority === 'medium' ? 'mediumGroup' : 'monitorGroup');
-                var labels = { high: 'High', medium: 'Medium', monitor: 'Monitor' };
-
-                var goalsHtml = '';
-                d.goals.forEach(function(g) {
-                  goalsHtml += '<li><span contenteditable="true" data-ph="Goal">' + esc(g) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
-                });
-
-                var intervHtml = '';
-                d.interventions.forEach(function(v) {
-                  intervHtml += '<li><span contenteditable="true" data-ph="Intervention">' + esc(v) + '</span><button class="remove-li" onclick="removeItem(this)">&times;</button></li>';
-                });
-
-                var div = document.createElement('div');
-                div.className = 'dx';
-                div.dataset.priority = d.priority;
-                div.innerHTML =
-                  '<button class="remove-btn" onclick="removeDx(this)" title="Remove diagnosis">&times;</button>' +
-                  '<div class="dx-header">' +
-                    '<div class="dx-num">' + dxCounter + '</div>' +
-                    '<div class="dx-title" contenteditable="true" data-ph="Diagnosis Title">' + esc(d.title) + '</div>' +
-                    '<span class="dx-badge ' + d.priority + '" onclick="cyclePriority(this)" title="Click to change priority">' + labels[d.priority] + '</span>' +
-                  '</div>' +
-                  '<div class="dx-body">' +
-                    '<div class="dx-section">' +
-                      '<div class="dx-label">Nursing Diagnosis</div>' +
-                      '<div class="dx-statement" contenteditable="true" data-ph="Full NANDA diagnosis statement...">' + esc(d.statement) + '</div>' +
-                    '</div>' +
-                    '<div class="dx-section">' +
-                      '<div class="dx-label">Goals</div>' +
-                      '<ul class="dx-goals" id="goals_' + dxCounter + '">' + goalsHtml + '</ul>' +
-                      '<button class="add-item-btn" onclick="addItem(\'goals_' + dxCounter + '\', \'Goal\')">+ Add Goal</button>' +
-                    '</div>' +
-                    '<div class="dx-section">' +
-                      '<div class="dx-label">Interventions</div>' +
-                      '<ul class="dx-interventions" id="interv_' + dxCounter + '">' + intervHtml + '</ul>' +
-                      '<button class="add-item-btn" onclick="addItem(\'interv_' + dxCounter + '\', \'Intervention\')">+ Add Intervention</button>' +
-                    '</div>' +
-                    '<div class="dx-section">' +
-                      '<div class="dx-label">Evaluation</div>' +
-                      '<div class="dx-eval" contenteditable="true" data-ph="Evaluation criteria...">' + esc(d.evaluation) + '</div>' +
-                    '</div>' +
-                  '</div>';
-
-                group.appendChild(div);
-              });
-            }
-
-            updateCount();
-            autoSave();
-            alert('PDF data imported: ' + (data.diagnoses ? data.diagnoses.length : 0) + ' diagnosis/diagnoses restored.');
-          } else {
-            alert('This PDF does not appear to contain WhtaLife clinical data.');
-          }
-        } catch(err) {
-          alert('Import failed: ' + err.message);
-          handler(text);
-        }
-      } else {
-        handler(text);
-      }
-    });
+    extractTextFromPDF(file, function(text) { handler(text); });
   } else {
     var reader = new FileReader();
     reader.onload = function(e) { handler(e.target.result); };

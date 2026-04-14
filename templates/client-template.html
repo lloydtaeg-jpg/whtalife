@@ -405,6 +405,10 @@
 </div>
 
 <div class="action-bar">
+  <button class="action-btn" onclick="exportForEditing()" title="Export data for editing later">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export for Editing
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -605,11 +609,7 @@ function downloadJSON(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-function downloadPDF() {
-  // Open all cards
-  document.querySelectorAll('.card').forEach(function(c) { c.classList.add('open'); });
-
-  // Embed structured data
+function exportForEditing() {
   var data = {
     type: 'whtalife-client',
     clientName: document.querySelector('.client-bar .name').textContent,
@@ -633,19 +633,14 @@ function downloadPDF() {
     card.querySelectorAll('.action-items li span').forEach(function(s) { c.actions.push(s.textContent); });
     data.cards.push(c);
   });
-  var jsonStr = JSON.stringify(data);
-  var b64 = btoa(unescape(encodeURIComponent(jsonStr)));
-  var dataDiv = document.createElement('div');
-  dataDiv.id = 'whtalife-data';
-  dataDiv.style.cssText = 'page-break-before:always;font-size:4px;line-height:4px;color:#ffffff;background:#ffffff;word-break:break-all;overflow-wrap:break-word;padding:2px;margin:0;';
-  dataDiv.textContent = 'WHTALIFE_DATA_START:' + b64 + ':WHTALIFE_DATA_END';
-  document.body.appendChild(dataDiv);
+  var name = (data.clientName || 'Patient_Care_Plan').replace(/[^a-z0-9]+/gi, '_');
+  downloadJSON(data, 'Patient_Care_Plan_' + name + '.json');
+  alert('Exported ' + data.cards.length + ' care plan cards.');
+}
 
-  setTimeout(function() {
-    window.print();
-    var dd = document.getElementById('whtalife-data');
-    if (dd) dd.remove();
-  }, 300);
+function downloadPDF() {
+  document.querySelectorAll('.card').forEach(function(c) { c.classList.add('open'); });
+  setTimeout(function() { window.print(); }, 200);
 }
 
 function clearAllData() {
@@ -831,55 +826,7 @@ function readCsvFile(file, handler) {
     };
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-    extractTextFromPDF(file, function(text) {
-      var cleanText = text.replace(/[\s,\n\r]+/g, '');
-      var markerStart = cleanText.indexOf('WHTALIFEDATASTART');
-      var markerEnd = cleanText.indexOf('WHTALIFEDATAEND');
-      if (markerStart < 0) { markerStart = cleanText.indexOf('WHTALIFE_DATA_START'); }
-      if (markerEnd < 0) { markerEnd = cleanText.indexOf('WHTALIFE_DATA_END'); }
-      var match = null;
-      if (markerStart >= 0 && markerEnd > markerStart) {
-        var rawBetween = cleanText.substring(markerStart, markerEnd);
-        var b64Start = rawBetween.indexOf('eyJ');
-        if (b64Start >= 0) {
-          var b64 = rawBetween.substring(b64Start).replace(/[^A-Za-z0-9+\/]/g, '');
-          var mod = b64.length % 4;
-          if (mod === 2) b64 += '==';
-          else if (mod === 3) b64 += '=';
-          match = b64;
-        }
-      }
-      if (match) {
-        try {
-          var decoded = atob(match);
-          try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
-          var data = JSON.parse(decoded);
-          if (data.type === 'whtalife-client' || (data.cards && Array.isArray(data.cards))) {
-            // Clear existing cards
-            document.querySelectorAll('.card').forEach(function(el) { el.remove(); });
-
-            // Restore client name and date
-            if (data.clientName) document.querySelector('.client-bar .name').textContent = data.clientName;
-            if (data.date) document.querySelector('.client-bar .date').textContent = data.date;
-
-            // Restore cards
-            if (data.cards && data.cards.length > 0) {
-              data.cards.forEach(function(c) { addCard(c); });
-            }
-
-            autoSave();
-            alert('PDF data imported: ' + (data.cards ? data.cards.length : 0) + ' care card' + ((data.cards && data.cards.length !== 1) ? 's' : '') + ' restored.');
-          } else {
-            alert('This PDF does not appear to contain WhtaLife client care plan data.');
-          }
-        } catch(err) {
-          console.error('Embedded data decode failed, falling back to text parse', err);
-          handler(text);
-        }
-      } else {
-        handler(text);
-      }
-    });
+    extractTextFromPDF(file, function(text) { handler(text); });
   } else {
     var reader = new FileReader();
     reader.onload = function(e) { handler(e.target.result); };
