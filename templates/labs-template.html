@@ -1500,26 +1500,26 @@ function readCsvFile(file, handler) {
     reader.readAsText(file);
   } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
     extractTextFromPDF(file, function(text) {
-      // Check for embedded structured data
       var cleanText = text.replace(/[\s,\n\r]+/g, '');
-      var startMarker = 'WHTALIFE_DATA_START:';
-      var endMarker = ':WHTALIFE_DATA_END';
-      var startIdx = cleanText.indexOf(startMarker.replace(/[\s,]+/g, ''));
-      var endIdx = cleanText.indexOf(endMarker.replace(/[\s,]+/g, ''));
+      var markerStart = cleanText.indexOf('WHTALIFEDATASTART');
+      var markerEnd = cleanText.indexOf('WHTALIFEDATAEND');
+      if (markerStart < 0) { markerStart = cleanText.indexOf('WHTALIFE_DATA_START'); }
+      if (markerEnd < 0) { markerEnd = cleanText.indexOf('WHTALIFE_DATA_END'); }
       var match = null;
-      if (startIdx >= 0 && endIdx > startIdx) {
-        var b64 = cleanText.substring(startIdx + startMarker.replace(/[\s,]+/g, '').length, endIdx);
-        b64 = b64.replace(/[^A-Za-z0-9+\/]/g, '');
-        var mod = b64.length % 4;
-        if (mod === 1) b64 = b64.substring(1);
-        mod = b64.length % 4;
-        if (mod === 2) b64 += '==';
-        else if (mod === 3) b64 += '=';
-        match = [null, b64];
+      if (markerStart >= 0 && markerEnd > markerStart) {
+        var rawBetween = cleanText.substring(markerStart, markerEnd);
+        var b64Start = rawBetween.indexOf('eyJ');
+        if (b64Start >= 0) {
+          var b64 = rawBetween.substring(b64Start).replace(/[^A-Za-z0-9+\/]/g, '');
+          var mod = b64.length % 4;
+          if (mod === 2) b64 += '==';
+          else if (mod === 3) b64 += '=';
+          match = b64;
+        }
       }
       if (match) {
         try {
-          var decoded = atob(match[1]);
+          var decoded = atob(match);
           try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
           var data = JSON.parse(decoded);
           if (data.type === 'whtalife-labs' || (data.results && Array.isArray(data.results))) {
