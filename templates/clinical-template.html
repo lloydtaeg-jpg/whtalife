@@ -973,15 +973,37 @@ function readCsvFile(file, handler) {
       }
       if (match) {
         try {
-          // Clean the base64 string: keep only valid chars, strip trailing = then re-pad
           var b64Clean = match[1].replace(/[^A-Za-z0-9+\/]/g, '');
-          // Add correct padding
           var pad = b64Clean.length % 4;
           if (pad === 2) b64Clean += '==';
           else if (pad === 3) b64Clean += '=';
 
-          var decoded = atob(b64Clean);
-          // Handle UTF-8
+          // Check for any non-base64 chars that slipped through
+          var invalid = b64Clean.match(/[^A-Za-z0-9+\/=]/g);
+          if (invalid) {
+            alert('DEBUG: Found invalid chars after cleaning: ' + JSON.stringify(invalid.slice(0,10)));
+          }
+
+          var decoded;
+          try {
+            decoded = atob(b64Clean);
+            alert('DEBUG: atob succeeded! Decoded length: ' + decoded.length + '\nFirst 100: ' + decoded.substring(0,100));
+          } catch(atobErr) {
+            // Try smaller chunks
+            alert('DEBUG: atob failed. Trying chunked decode. b64 length: ' + b64Clean.length + ' mod4: ' + (b64Clean.length % 4));
+            decoded = '';
+            var chunkSize = 1024;
+            for (var ci = 0; ci < b64Clean.length; ci += chunkSize) {
+              var chunk = b64Clean.substring(ci, Math.min(ci + chunkSize, b64Clean.length));
+              // Ensure chunk is padded
+              while (chunk.length % 4 !== 0) chunk += '=';
+              try { decoded += atob(chunk); } catch(chunkErr) {
+                alert('DEBUG: Chunk failed at offset ' + ci + ': ' + chunkErr.message + '\nChunk: [' + chunk.substring(0,40) + '...]');
+                handler(text);
+                return;
+              }
+            }
+          }
           try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
           var data = JSON.parse(decoded);
           if (data.type === 'whtalife-clinical' || (data.diagnoses && Array.isArray(data.diagnoses))) {
