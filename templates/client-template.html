@@ -842,9 +842,10 @@ function readCsvFile(file, handler) {
       if (startIdx >= 0 && endIdx > startIdx) {
         var b64 = cleanText.substring(startIdx + startMarker.replace(/[\s,]+/g, '').length, endIdx);
         b64 = b64.replace(/[^A-Za-z0-9+\/]/g, '');
-        var pad = b64.length % 4;
-        if (pad === 2) b64 += '==';
-        else if (pad === 3) b64 += '=';
+        var mod = b64.length % 4;
+        if (mod === 1) b64 = b64.substring(0, b64.length - 1);
+        else if (mod === 2) b64 += '==';
+        else if (mod === 3) b64 += '=';
         match = [null, b64];
       }
       if (match) {
