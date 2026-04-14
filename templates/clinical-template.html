@@ -982,6 +982,10 @@ function readCsvFile(file, handler) {
       }
       if (match) {
         try {
+          // DEBUG: check what we're about to decode
+          var testDecode = false;
+          try { atob(match); testDecode = true; } catch(e) { /* */ }
+          alert('DEBUG:\nB64 length: ' + match.length + '\nMod4: ' + (match.length % 4) + '\natob works: ' + testDecode + '\nFirst 60: ' + match.substring(0,60) + '\nLast 60: ' + match.substring(match.length - 60) + '\nContains non-b64: ' + (match.replace(/[A-Za-z0-9+\/=]/g, '').length > 0 ? 'YES: [' + match.replace(/[A-Za-z0-9+\/=]/g, '').substring(0,20) + ']' : 'no'));
           var decoded = atob(match);
           try { decoded = decodeURIComponent(escape(decoded)); } catch(ignore) {}
           var data = JSON.parse(decoded);
