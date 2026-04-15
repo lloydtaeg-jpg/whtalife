@@ -552,7 +552,20 @@ var PANELS = [
       { key: 'bun',    label: 'BUN',          unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
       { key: 'cr',     label: 'Creatinine',   unit: 'μmol/L',  range: [62, 106],  chartMin: 40,  chartMax: 200, dec: 0 },
       { key: 'egfr',   label: 'eGFR',         unit: 'mL/min/1.73m²', range: [60, 120], chartMin: 0, chartMax: 120, dec: 0 },
-      { key: 'ca',     label: 'Calcium',      unit: 'mmol/L',  range: [2.10, 2.55], chartMin: 1.8, chartMax: 3.0, dec: 2 }
+      { key: 'ca',     label: 'Calcium',      unit: 'mmol/L',  range: [2.10, 2.55], chartMin: 1.8, chartMax: 3.0, dec: 2 },
+      { key: 'mg',     label: 'Magnesium',    unit: 'mmol/L',  range: [0.70, 1.05], chartMin: 0.4, chartMax: 1.4, dec: 2 }
+    ]
+  },
+  {
+    name: 'Venous Blood Gas',
+    color: '#4A8FA8', bg: '#DFF0F5',
+    tests: [
+      { key: 'vph',    label: 'pH',           unit: '',        range: [7.31, 7.41], chartMin: 7.20, chartMax: 7.50, dec: 2 },
+      { key: 'vpco2',  label: 'pCO₂',         unit: 'mmHg',   range: [41, 51],     chartMin: 30,   chartMax: 60,   dec: 0 },
+      { key: 'vpo2',   label: 'pO₂',          unit: 'mmHg',   range: [30, 50],     chartMin: 20,   chartMax: 70,   dec: 0 },
+      { key: 'vhco3',  label: 'HCO₃',         unit: 'mmol/L', range: [22, 29],     chartMin: 15,   chartMax: 35,   dec: 0 },
+      { key: 'vbe',    label: 'Base Excess',   unit: 'mmol/L', range: [-2, 2],      chartMin: -8,   chartMax: 8,    dec: 1 },
+      { key: 'vlac',   label: 'Lactate',       unit: 'mmol/L', range: [0.5, 2.2],   chartMin: 0,    chartMax: 6,    dec: 1 }
     ]
   },
   {
