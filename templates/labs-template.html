@@ -549,7 +549,8 @@ var PANELS = [
       { key: 'k',      label: 'Potassium',    unit: 'mmol/L',  range: [3.5, 5.0], chartMin: 2.5, chartMax: 6.5, dec: 1 },
       { key: 'cl',     label: 'Chloride',     unit: 'mmol/L',  range: [98, 107],  chartMin: 90,  chartMax: 115, dec: 0 },
       { key: 'hco3',   label: 'Bicarbonate',  unit: 'mmol/L',  range: [22, 29],   chartMin: 15,  chartMax: 35,  dec: 0 },
-      { key: 'bun',    label: 'Urea',         unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
+      { key: 'bun',    label: 'BUN',          unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
+      { key: 'urea',   label: 'Urea',         unit: 'mmol/L',  range: [3.0, 9.2], chartMin: 1,   chartMax: 15,  dec: 1 },
       { key: 'cr',     label: 'Creatinine',   unit: 'μmol/L',  range: [62, 106],  chartMin: 40,  chartMax: 200, dec: 0 },
       { key: 'egfr',   label: 'eGFR',         unit: 'mL/min/1.73m²', range: [60, 120], chartMin: 0, chartMax: 120, dec: 0 },
       { key: 'ca',     label: 'Calcium',      unit: 'mmol/L',  range: [2.10, 2.55], chartMin: 1.8, chartMax: 3.0, dec: 2 },
@@ -653,7 +654,8 @@ var PANELS = [
     color: '#C8362E', bg: '#F8E2E0',
     tests: [
       { key: 'trop',   label: 'High Sensitivity Troponin', unit: 'ng/L', range: [0, 14], chartMin: 0, chartMax: 50, dec: 0 },
-      { key: 'bnp',    label: 'NT-proBNP',    unit: 'ng/L',    range: [0, 125],   chartMin: 0, chartMax: 500, dec: 0 },
+      { key: 'bnp',    label: 'BNP',          unit: 'ng/L',    range: [0, 100],   chartMin: 0, chartMax: 500, dec: 0 },
+      { key: 'ntbnp',  label: 'NT-proBNP',    unit: 'ng/L',    range: [0, 125],   chartMin: 0, chartMax: 1000, dec: 0 },
       { key: 'ck',     label: 'Creatine Kinase (CK)', unit: 'U/L', range: [30, 200], chartMin: 0, chartMax: 500, dec: 0 },
       { key: 'ldh',    label: 'LDH Plasma',   unit: 'U/L',     range: [120, 246], chartMin: 50, chartMax: 400, dec: 0 }
     ]
