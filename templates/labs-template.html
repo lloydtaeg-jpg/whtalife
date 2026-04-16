@@ -549,11 +549,14 @@ var PANELS = [
       { key: 'k',      label: 'Potassium',    unit: 'mmol/L',  range: [3.5, 5.0], chartMin: 2.5, chartMax: 6.5, dec: 1 },
       { key: 'cl',     label: 'Chloride',     unit: 'mmol/L',  range: [98, 107],  chartMin: 90,  chartMax: 115, dec: 0 },
       { key: 'hco3',   label: 'Bicarbonate',  unit: 'mmol/L',  range: [22, 29],   chartMin: 15,  chartMax: 35,  dec: 0 },
-      { key: 'bun',    label: 'BUN',          unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
+      { key: 'bun',    label: 'Urea',         unit: 'mmol/L',  range: [2.5, 7.1], chartMin: 1,   chartMax: 15,  dec: 1 },
       { key: 'cr',     label: 'Creatinine',   unit: 'μmol/L',  range: [62, 106],  chartMin: 40,  chartMax: 200, dec: 0 },
       { key: 'egfr',   label: 'eGFR',         unit: 'mL/min/1.73m²', range: [60, 120], chartMin: 0, chartMax: 120, dec: 0 },
       { key: 'ca',     label: 'Calcium',      unit: 'mmol/L',  range: [2.10, 2.55], chartMin: 1.8, chartMax: 3.0, dec: 2 },
-      { key: 'mg',     label: 'Magnesium',    unit: 'mmol/L',  range: [0.70, 1.05], chartMin: 0.4, chartMax: 1.4, dec: 2 }
+      { key: 'mg',     label: 'Magnesium',    unit: 'mmol/L',  range: [0.70, 1.05], chartMin: 0.4, chartMax: 1.4, dec: 2 },
+      { key: 'phos',   label: 'Phosphorus',   unit: 'mmol/L',  range: [0.81, 1.45], chartMin: 0.5, chartMax: 2.0, dec: 2 },
+      { key: 'ag',     label: 'Anion Gap',    unit: 'mmol/L',  range: [8, 16],    chartMin: 4,   chartMax: 24,  dec: 0 },
+      { key: 'ua',     label: 'Uric Acid',    unit: 'μmol/L',  range: [150, 420], chartMin: 100, chartMax: 600, dec: 0 }
     ]
   },
   {
@@ -574,10 +577,12 @@ var PANELS = [
     tests: [
       { key: 'alt',    label: 'ALT',          unit: 'U/L',     range: [7, 56],    chartMin: 0, chartMax: 120, dec: 0 },
       { key: 'ast',    label: 'AST',          unit: 'U/L',     range: [10, 40],   chartMin: 0, chartMax: 120, dec: 0 },
-      { key: 'alp',    label: 'ALP',          unit: 'U/L',     range: [40, 130],  chartMin: 20, chartMax: 250, dec: 0 },
-      { key: 'bili',   label: 'Bilirubin',    unit: 'μmol/L',  range: [3, 17],    chartMin: 0, chartMax: 35, dec: 0 },
+      { key: 'alp',    label: 'ALP Plasma',   unit: 'U/L',     range: [40, 130],  chartMin: 20, chartMax: 250, dec: 0 },
+      { key: 'bili',   label: 'Bilirubin Total Plasma', unit: 'μmol/L', range: [3, 17], chartMin: 0, chartMax: 35, dec: 0 },
       { key: 'alb',    label: 'Albumin',      unit: 'g/L',     range: [35, 50],   chartMin: 20, chartMax: 60, dec: 0 },
-      { key: 'tp',     label: 'Total Protein', unit: 'g/L',    range: [60, 80],   chartMin: 40, chartMax: 100, dec: 0 }
+      { key: 'tp',     label: 'Total Protein', unit: 'g/L',    range: [60, 80],   chartMin: 40, chartMax: 100, dec: 0 },
+      { key: 'ggt',    label: 'GGT Plasma',   unit: 'U/L',     range: [5, 65],    chartMin: 0, chartMax: 150, dec: 0 },
+      { key: 'glob',   label: 'Globulins',    unit: 'g/L',     range: [20, 35],   chartMin: 10, chartMax: 50, dec: 0 }
     ]
   },
   {
@@ -588,7 +593,10 @@ var PANELS = [
       { key: 'ldl',    label: 'LDL',               unit: 'mmol/L', range: [0, 3.5], chartMin: 1, chartMax: 6, dec: 1 },
       { key: 'hdl',    label: 'HDL',               unit: 'mmol/L', range: [1.0, 2.5], chartMin: 0.5, chartMax: 3, dec: 1 },
       { key: 'tg',     label: 'Triglycerides',     unit: 'mmol/L', range: [0, 1.7], chartMin: 0, chartMax: 4, dec: 1 },
-      { key: 'nonhdl', label: 'Non-HDL',           unit: 'mmol/L', range: [0, 4.2], chartMin: 1, chartMax: 7, dec: 1 }
+      { key: 'nonhdl', label: 'Non-HDL',           unit: 'mmol/L', range: [0, 4.2], chartMin: 1, chartMax: 7, dec: 1 },
+      { key: 'tchdl', label: 'Total Chol/HDL Ratio', unit: '', range: [0, 5.0], chartMin: 0, chartMax: 8, dec: 1 },
+      { key: 'apob',  label: 'Apo B',             unit: 'g/L',    range: [0, 1.2], chartMin: 0, chartMax: 2, dec: 2 },
+      { key: 'apoa1', label: 'Apo A1',            unit: 'g/L',    range: [1.1, 2.1], chartMin: 0.5, chartMax: 3, dec: 2 }
     ]
   },
   {
@@ -601,21 +609,24 @@ var PANELS = [
     ]
   },
   {
-    name: 'Hormone — Thyroid',
+    name: 'Hormones',
     color: '#E37464', bg: '#FBE6E2',
     tests: [
       { key: 'tsh',    label: 'TSH',          unit: 'mIU/L',   range: [0.32, 4.0], chartMin: 0, chartMax: 8, dec: 2 },
       { key: 'ft4',    label: 'Free T4',      unit: 'pmol/L',  range: [10, 25],    chartMin: 5, chartMax: 35, dec: 1 },
-      { key: 'ft3',    label: 'Free T3',      unit: 'pmol/L',  range: [3.5, 6.5],  chartMin: 2, chartMax: 9, dec: 1 }
+      { key: 'ft3',    label: 'Free T3',      unit: 'pmol/L',  range: [3.5, 6.5],  chartMin: 2, chartMax: 9, dec: 1 },
+      { key: 'biotst', label: 'Bioavailable Testosterone', unit: 'nmol/L', range: [3.6, 11.2], chartMin: 0, chartMax: 20, dec: 1 }
     ]
   },
   {
     name: 'Iron Studies',
     color: '#A05A2C', bg: '#F3E6DB',
     tests: [
-      { key: 'fer',    label: 'Ferritin',     unit: 'μg/L',    range: [15, 200], chartMin: 0, chartMax: 400, dec: 0 },
-      { key: 'iron',   label: 'Iron',         unit: 'μmol/L',  range: [10, 30],  chartMin: 5, chartMax: 40, dec: 0 },
-      { key: 'tsat',   label: 'Transferrin Saturation', unit: '%', range: [20, 50], chartMin: 5, chartMax: 60, dec: 0 }
+      { key: 'fer',    label: 'Ferritin Plasma', unit: 'μg/L',  range: [15, 200], chartMin: 0, chartMax: 400, dec: 0 },
+      { key: 'iron',   label: 'Iron (FE) Plasma', unit: 'μmol/L', range: [10, 30], chartMin: 5, chartMax: 40, dec: 0 },
+      { key: 'tsat',   label: 'Transferrin Saturation', unit: '%', range: [20, 50], chartMin: 5, chartMax: 60, dec: 0 },
+      { key: 'tf',     label: 'Transferrin Plasma', unit: 'g/L', range: [2.0, 3.6], chartMin: 1, chartMax: 5, dec: 1 },
+      { key: 'tibc',   label: 'Total Iron Binding Capacity', unit: 'μmol/L', range: [45, 72], chartMin: 30, chartMax: 90, dec: 0 }
     ]
   },
   {
@@ -633,15 +644,18 @@ var PANELS = [
     tests: [
       { key: 'inr',    label: 'INR',          unit: '',        range: [0.9, 1.1], chartMin: 0.5, chartMax: 4, dec: 1 },
       { key: 'pt',     label: 'PT',           unit: 's',       range: [11, 13.5], chartMin: 9,   chartMax: 20, dec: 1 },
-      { key: 'aptt',   label: 'aPTT',         unit: 's',       range: [25, 35],   chartMin: 20,  chartMax: 50, dec: 0 }
+      { key: 'aptt',   label: 'aPTT',         unit: 's',       range: [25, 35],   chartMin: 20,  chartMax: 50, dec: 0 },
+      { key: 'fib',    label: 'Fibrinogen',   unit: 'g/L',     range: [2.0, 4.0], chartMin: 1,   chartMax: 6,  dec: 1 }
     ]
   },
   {
     name: 'Cardiac Markers',
     color: '#C8362E', bg: '#F8E2E0',
     tests: [
-      { key: 'trop',   label: 'Troponin',     unit: 'ng/L',    range: [0, 14],    chartMin: 0, chartMax: 50, dec: 0 },
-      { key: 'bnp',    label: 'BNP',          unit: 'ng/L',    range: [0, 100],   chartMin: 0, chartMax: 500, dec: 0 }
+      { key: 'trop',   label: 'High Sensitivity Troponin', unit: 'ng/L', range: [0, 14], chartMin: 0, chartMax: 50, dec: 0 },
+      { key: 'bnp',    label: 'NT-proBNP',    unit: 'ng/L',    range: [0, 125],   chartMin: 0, chartMax: 500, dec: 0 },
+      { key: 'ck',     label: 'Creatine Kinase (CK)', unit: 'U/L', range: [30, 200], chartMin: 0, chartMax: 500, dec: 0 },
+      { key: 'ldh',    label: 'LDH Plasma',   unit: 'U/L',     range: [120, 246], chartMin: 50, chartMax: 400, dec: 0 }
     ]
   },
   {
@@ -649,7 +663,8 @@ var PANELS = [
     color: '#9D3578', bg: '#F2E1EC',
     tests: [
       { key: 'crp',    label: 'CRP',          unit: 'mg/L',    range: [0, 5],     chartMin: 0, chartMax: 30, dec: 1 },
-      { key: 'esr',    label: 'ESR',          unit: 'mm/hr',   range: [0, 20],    chartMin: 0, chartMax: 50, dec: 0 }
+      { key: 'esr',    label: 'ESR',          unit: 'mm/hr',   range: [0, 20],    chartMin: 0, chartMax: 50, dec: 0 },
+      { key: 'hscrp',  label: 'hs-CRP Plasma', unit: 'mg/L',   range: [0, 3.0],   chartMin: 0, chartMax: 15, dec: 1 }
     ]
   },
   {
@@ -663,6 +678,22 @@ var PANELS = [
       { key: 'uket',    label: 'Ketones',          unit: 'mmol/L', range: [0, 0.5],       chartMin: 0,     chartMax: 4,     dec: 1 },
       { key: 'ublood',  label: 'Blood (RBC count)', unit: '/hpf', range: [0, 3],         chartMin: 0,     chartMax: 30,    dec: 0 },
       { key: 'uwbc',    label: 'WBC',              unit: '/hpf',   range: [0, 5],         chartMin: 0,     chartMax: 50,    dec: 0 }
+    ]
+  },
+  {
+    name: 'Prostate',
+    color: '#5A6B3A', bg: '#EAEDE3',
+    tests: [
+      { key: 'psat',   label: 'PSA Total',    unit: 'μg/L',    range: [0, 4.0],   chartMin: 0, chartMax: 10, dec: 2 },
+      { key: 'psaf',   label: 'PSA Free',     unit: 'μg/L',    range: [0, 1.0],   chartMin: 0, chartMax: 3,  dec: 2 }
+    ]
+  },
+  {
+    name: 'Blood Bank / Transfusion',
+    color: '#8B2252', bg: '#F2DDE6',
+    tests: [
+      /* Type and Screen is informational only — not meaningful as a graphed value */
+      { key: 'ts',     label: 'Type and Screen', unit: '',      range: [0, 1],     chartMin: 0, chartMax: 1,  dec: 0 }
     ]
   },
   {
