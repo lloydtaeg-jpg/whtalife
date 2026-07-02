@@ -440,7 +440,7 @@
 
   <div class="csv-drop" id="csvDropVitals">
     Drop a <strong>Vitals CSV, PDF, or JSON</strong> here or click to browse
-    <br><small>CSV columns: DateTime (or Date, Time), Temp, BP (or Systolic, Diastolic), HR, SpO2, RR, Glucose</small>
+    <br><small>CSV columns: DateTime (or Date, Time), Temp, BP (or Systolic, Diastolic), HR, SpO2, RR, Glucose, Weight</small>
     <input type="file" accept=".csv,.json,.pdf" id="csvFileVitals">
   </div>
 
@@ -461,6 +461,7 @@
         <th>SpO₂ %</th>
         <th>RR</th>
         <th>Glucose</th>
+        <th>Weight kg</th>
         <th>Status</th>
         <th></th>
       </tr>
@@ -501,7 +502,8 @@ var VITALS = [
   { key: 'hr',       label: 'Heart Rate',      unit: 'bpm',   normal: [60, 100],    chartMin: 45,   chartMax: 105,  decimals: 0 },
   { key: 'spo2',     label: 'SpO₂',            unit: '%',     normal: [95, 100],    chartMin: 93,   chartMax: 101,  decimals: 0 },
   { key: 'rr',       label: 'Respiratory Rate',unit: 'br/min',normal: [12, 20],     chartMin: 8,    chartMax: 24,   decimals: 0 },
-  { key: 'glucose',  label: 'Blood Glucose',   unit: 'mmol/L',normal: [3.9, 7.8],   chartMin: 3.0,  chartMax: 10.0, decimals: 1 }
+  { key: 'glucose',  label: 'Blood Glucose',   unit: 'mmol/L',normal: [3.9, 7.8],   chartMin: 3.0,  chartMax: 10.0, decimals: 1 },
+  { key: 'weight',   label: 'Weight',          unit: 'kg',    normal: null,         chartMin: 40,   chartMax: 100,  decimals: 1 }
 ];
 
 var rows = []; // each row: { datetime, temp, sys, dia, hr, spo2, rr, glucose }
@@ -512,7 +514,7 @@ var rows = []; // each row: { datetime, temp, sys, dia, hr, spo2, rr, glucose }
 function addRow(data) {
   var d = data || {
     datetime: '',
-    temp: '', sys: '', dia: '', hr: '', spo2: '', rr: '', glucose: ''
+    temp: '', sys: '', dia: '', hr: '', spo2: '', rr: '', glucose: '', weight: ''
   };
   rows.push(d);
   renderTable();
@@ -543,21 +545,21 @@ function updateRow(idx, field, value) {
 
 function loadSample() {
   var sample = [
-    { datetime: '2024-11-15T08:00', temp: '36.7', sys: '127', dia: '78', hr: '70', spo2: '97', rr: '15', glucose: '5.3' },
-    { datetime: '2024-11-16T08:00', temp: '37.3', sys: '122', dia: '69', hr: '86', spo2: '99', rr: '17', glucose: '6.0' },
-    { datetime: '2024-11-17T08:00', temp: '37.2', sys: '128', dia: '71', hr: '60', spo2: '98', rr: '14', glucose: '5.2' },
-    { datetime: '2024-11-18T08:00', temp: '36.9', sys: '125', dia: '77', hr: '75', spo2: '99', rr: '19', glucose: '5.4' },
-    { datetime: '2024-11-19T08:00', temp: '37.1', sys: '125', dia: '71', hr: '65', spo2: '98', rr: '16', glucose: '5.6' },
-    { datetime: '2024-11-20T08:00', temp: '36.5', sys: '130', dia: '74', hr: '80', spo2: '99', rr: '19', glucose: '6.2' },
-    { datetime: '2024-11-21T08:00', temp: '36.7', sys: '122', dia: '84', hr: '82', spo2: '99', rr: '19', glucose: '5.9' },
-    { datetime: '2024-11-22T08:00', temp: '36.8', sys: '118', dia: '71', hr: '60', spo2: '99', rr: '13', glucose: '6.0' },
-    { datetime: '2024-11-23T08:00', temp: '37.1', sys: '133', dia: '71', hr: '71', spo2: '98', rr: '17', glucose: '5.1' },
-    { datetime: '2024-11-24T08:00', temp: '36.8', sys: '137', dia: '88', hr: '72', spo2: '97', rr: '15', glucose: '5.6' },
-    { datetime: '2024-11-25T08:00', temp: '37.2', sys: '134', dia: '74', hr: '81', spo2: '97', rr: '19', glucose: '4.9' },
-    { datetime: '2024-11-26T08:00', temp: '37.3', sys: '122', dia: '69', hr: '86', spo2: '99', rr: '17', glucose: '6.0' },
-    { datetime: '2024-11-27T08:00', temp: '36.7', sys: '134', dia: '79', hr: '80', spo2: '98', rr: '13', glucose: '5.2' },
-    { datetime: '2024-11-28T08:00', temp: '36.9', sys: '118', dia: '71', hr: '71', spo2: '98', rr: '14', glucose: '5.4' },
-    { datetime: '2024-11-29T08:00', temp: '36.8', sys: '129', dia: '88', hr: '66', spo2: '96', rr: '18', glucose: '5.3' }
+    { datetime: '2024-11-15T08:00', temp: '36.7', sys: '127', dia: '78', hr: '70', spo2: '97', rr: '15', glucose: '5.3', weight: '72.4' },
+    { datetime: '2024-11-16T08:00', temp: '37.3', sys: '122', dia: '69', hr: '86', spo2: '99', rr: '17', glucose: '6.0', weight: '72.1' },
+    { datetime: '2024-11-17T08:00', temp: '37.2', sys: '128', dia: '71', hr: '60', spo2: '98', rr: '14', glucose: '5.2', weight: '71.8' },
+    { datetime: '2024-11-18T08:00', temp: '36.9', sys: '125', dia: '77', hr: '75', spo2: '99', rr: '19', glucose: '5.4', weight: '72.6' },
+    { datetime: '2024-11-19T08:00', temp: '37.1', sys: '125', dia: '71', hr: '65', spo2: '98', rr: '16', glucose: '5.6', weight: '72.9' },
+    { datetime: '2024-11-20T08:00', temp: '36.5', sys: '130', dia: '74', hr: '80', spo2: '99', rr: '19', glucose: '6.2', weight: '72.3' },
+    { datetime: '2024-11-21T08:00', temp: '36.7', sys: '122', dia: '84', hr: '82', spo2: '99', rr: '19', glucose: '5.9', weight: '71.7' },
+    { datetime: '2024-11-22T08:00', temp: '36.8', sys: '118', dia: '71', hr: '60', spo2: '99', rr: '13', glucose: '6.0', weight: '72.0' },
+    { datetime: '2024-11-23T08:00', temp: '37.1', sys: '133', dia: '71', hr: '71', spo2: '98', rr: '17', glucose: '5.1', weight: '72.5' },
+    { datetime: '2024-11-24T08:00', temp: '36.8', sys: '137', dia: '88', hr: '72', spo2: '97', rr: '15', glucose: '5.6', weight: '72.8' },
+    { datetime: '2024-11-25T08:00', temp: '37.2', sys: '134', dia: '74', hr: '81', spo2: '97', rr: '19', glucose: '4.9', weight: '73.1' },
+    { datetime: '2024-11-26T08:00', temp: '37.3', sys: '122', dia: '69', hr: '86', spo2: '99', rr: '17', glucose: '6.0', weight: '72.2' },
+    { datetime: '2024-11-27T08:00', temp: '36.7', sys: '134', dia: '79', hr: '80', spo2: '98', rr: '13', glucose: '5.2', weight: '71.9' },
+    { datetime: '2024-11-28T08:00', temp: '36.9', sys: '118', dia: '71', hr: '71', spo2: '98', rr: '14', glucose: '5.4', weight: '72.7' },
+    { datetime: '2024-11-29T08:00', temp: '36.8', sys: '129', dia: '88', hr: '66', spo2: '96', rr: '18', glucose: '5.3', weight: '73.0' }
   ];
   rows = sample;
   renderTable();
@@ -602,6 +604,7 @@ function renderTable() {
       '<td><input type="number" value="' + esc(r.spo2) + '" oninput="updateRow(' + i + ',\'spo2\',this.value)"></td>' +
       '<td><input type="number" value="' + esc(r.rr) + '" oninput="updateRow(' + i + ',\'rr\',this.value)"></td>' +
       '<td><input type="number" step="0.1" value="' + esc(r.glucose) + '" oninput="updateRow(' + i + ',\'glucose\',this.value)"></td>' +
+      '<td><input type="number" step="0.1" value="' + esc(r.weight || '') + '" oninput="updateRow(' + i + ',\'weight\',this.value)"></td>' +
       '<td class="status-cell">' + status + '</td>' +
       '<td><button class="row-remove" onclick="removeRow(' + i + ')" title="Remove">&times;</button></td>';
     tbody.appendChild(tr);
@@ -720,7 +723,7 @@ function renderStatsTable() {
       '<td>' + fmt(min, v.decimals) + '</td>' +
       '<td>' + fmt(max, v.decimals) + '</td>' +
       '<td>' + fmt(stdev(all), v.decimals === 0 ? 0 : v.decimals) + '</td>' +
-      '<td>' + v.normal[0] + ' – ' + v.normal[1] + '</td>' +
+      '<td>' + (v.normal ? v.normal[0] + ' – ' + v.normal[1] : '—') + '</td>' +
       '<td>' + v.unit + '</td>';
     tbody.appendChild(tr);
   });
@@ -809,10 +812,12 @@ function drawChart(canvasId, medianId, vital, period) {
   }
 
   // Normal range band
+  if (vital.normal) {
   var normTop = yToPx(Math.min(vital.normal[1], yMax));
   var normBot = yToPx(Math.max(vital.normal[0], yMin));
   ctx.fillStyle = 'rgba(106,168,79,0.28)';
   ctx.fillRect(padL, normTop, plotW, normBot - normTop);
+  }
   // Top and bottom border lines for the normal range
   ctx.strokeStyle = 'rgba(74,138,57,0.55)';
   ctx.lineWidth = 1;
@@ -1175,6 +1180,7 @@ function importVitals(text) {
   var spo2Idx = findCol('spo2', 'o2sat', 'oxsat', 'saturation', 'spo2');
   var rrIdx = findCol('rr', 'respiratoryrate', 'resprate');
   var gluIdx = findCol('glucose', 'bloodglucose', 'bg');
+  var wtIdx = findCol('weight', 'wt', 'bodyweight');
 
   var count = 0;
   for (var i = headerRowIdx + 1; i < csvRows.length; i++) {
@@ -1207,7 +1213,8 @@ function importVitals(text) {
       hr: hrIdx >= 0 ? (r[hrIdx] || '') : '',
       spo2: spo2Idx >= 0 ? (r[spo2Idx] || '') : '',
       rr: rrIdx >= 0 ? (r[rrIdx] || '') : '',
-      glucose: gluIdx >= 0 ? (r[gluIdx] || '') : ''
+      glucose: gluIdx >= 0 ? (r[gluIdx] || '') : '',
+      weight: wtIdx >= 0 ? (r[wtIdx] || '') : ''
     };
     rows.push(row);
     count++;
