@@ -57,8 +57,8 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 .box{width:15px;height:15px;border:1.5px solid var(--aegean);border-radius:3px;flex-shrink:0;margin-top:.15rem;}
 .sig-grid{display:grid;grid-template-columns:1fr;gap:1.4rem;margin-top:.4rem;}
 @media(min-width:560px){.sig-grid{grid-template-columns:1fr 1fr;}}
-.sig{border-top:1px solid var(--text);padding-top:.35rem;font-size:.75rem;color:var(--text-light);}
-.sig .line{height:2.2rem;}
+.sig{padding-top:.2rem;font-size:.75rem;color:var(--text-light);}.sigline{border-bottom:1px solid var(--text);min-height:1.9rem;display:flex;align-items:flex-end;padding-bottom:2px;}.sigfill{border:none!important;outline:none;min-width:60px;display:inline-block;padding:0 2px;color:var(--text);font-size:.9rem;}.sigfill:empty:before{content:attr(data-ph);color:var(--text-light);font-style:italic;font-size:.78rem;}.sigcap{margin-top:.25rem;font-size:.72rem;color:var(--text-light);}.sigdate{margin-top:.6rem;font-size:.8rem;color:var(--text-mid);}.sigdate .datefill{border-bottom:1px solid var(--text)!important;min-width:130px;}
+
 .note{font-size:.72rem;color:var(--text-light);font-style:italic;margin-top:1rem;text-align:center;padding:0 1rem;}
 .action-bar{position:fixed;bottom:1.25rem;right:1.25rem;display:flex;gap:.5rem;z-index:100;}
 .action-btn{background:var(--aegean-dark);color:#fff;border:none;height:38px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:.4rem;padding:0 .95rem;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:'Inter',sans-serif;font-size:.72rem;font-weight:500;}
@@ -143,7 +143,7 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
     <div class="card-info"><div class="card-title">Acknowledgement &amp; Signatures</div><div class="card-sub">Confirming your consent</div></div>
     <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
   </div>
-  <div class="card-bd"><div class="card-inner"><div class="body-text"><p>By signing below, I confirm that these consents were explained to me, that I understood them, and that they reflect my wishes.</p></div><div class="sig-grid"><div class="sig"><div class="line"></div>Client / Substitute Decision-Maker &nbsp;&nbsp; Date</div><div class="sig"><div class="line"></div>Atria Private Care Representative &nbsp;&nbsp; Date</div></div></div></div>
+  <div class="card-bd"><div class="card-inner"><div class="body-text"><p>By signing below, I confirm that these consents were explained to me, that I understood them, and that they reflect my wishes.</p></div><div class="sig-grid"><div class="sig"><div class="sigline"><span class="sigfill" contenteditable="true" data-ph="Signature / name"></span></div><div class="sigcap">Client / Substitute Decision-Maker</div><div class="sigdate">Date: <span class="sigfill datefill" contenteditable="true" data-ph="Date"></span></div></div><div class="sig"><div class="sigline"><span class="sigfill" contenteditable="true" data-ph="Signature / name"></span></div><div class="sigcap">Atria Private Care Representative</div><div class="sigdate">Date: <span class="sigfill datefill" contenteditable="true" data-ph="Date"></span></div></div></div></div></div>
 </div>
   <div class="note">This document is a general template and not legal advice. Please have it reviewed by a qualified professional and confirmed against your funder and insurer requirements before use.</div>
 </div>
