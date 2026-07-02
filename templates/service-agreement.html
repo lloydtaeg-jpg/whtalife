@@ -54,7 +54,7 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 .fieldrow{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:.82rem;color:var(--text-mid);margin-top:.3rem;}
 .fieldrow label{font-weight:500;color:var(--text);}
 .consent-line{display:flex;align-items:flex-start;gap:.55rem;font-size:.82rem;color:var(--text-mid);padding:.3rem 0;line-height:1.5;}
-.box{width:15px;height:15px;border:1.5px solid var(--aegean);border-radius:3px;flex-shrink:0;margin-top:.15rem;}
+.box{width:15px;height:15px;border:1.5px solid var(--aegean);border-radius:3px;flex-shrink:0;margin-top:.15rem;cursor:pointer;}.box.checked{background:var(--aegean);border-color:var(--aegean);position:relative;}.box.checked:after{content:'';position:absolute;left:4px;top:1px;width:3px;height:7px;border:solid var(--white);border-width:0 2px 2px 0;transform:rotate(45deg);}
 .sig-grid{display:grid;grid-template-columns:1fr;gap:1.4rem;margin-top:.4rem;}
 @media(min-width:560px){.sig-grid{grid-template-columns:1fr 1fr;}}
 .sig{border-top:1px solid var(--text);padding-top:.35rem;font-size:.75rem;color:var(--text-light);}
@@ -101,7 +101,7 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
     <div class="card-info"><div class="card-title">Services to Be Provided</div><div class="card-sub">What care Atria Private Care will deliver</div></div>
     <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
   </div>
-  <div class="card-bd"><div class="card-inner"><div class="sec"><div class="sec-lbl">Scope of services</div><div class="body-text"><p>The Agency will provide the services selected below, delivered in accordance with the care plan developed by the Registered Nurse (RN) assigned to the client’s case. Services may be adjusted as the client’s needs change, with agreement of the Parties.</p></div></div><ul class="check"><li>Personal support with activities of daily living (bathing, grooming, dressing, toileting, mobility, transfers).</li><li>Homemaking and instrumental support (meal preparation, light housekeeping, laundry).</li><li>Nursing services delivered under the RN care plan.</li><li>Companionship, supervision and respite support.</li><li>Other agreed services: <span contenteditable="true" data-ph="Describe" style="min-width:220px"></span></li></ul></div></div>
+  <div class="card-bd"><div class="card-inner"><div class="sec"><div class="sec-lbl">Scope of services</div><div class="body-text"><p>The Agency will provide the services selected below, delivered in accordance with the care plan developed by the Registered Nurse (RN) assigned to the client’s case. Services may be adjusted as the client’s needs change, with agreement of the Parties.</p></div></div><div class="consent-line"><span class="box"></span><span>Personal support with activities of daily living (bathing, grooming, dressing, toileting, mobility, transfers).</span></div><div class="consent-line"><span class="box"></span><span>Homemaking and instrumental support (meal preparation, light housekeeping, laundry).</span></div><div class="consent-line"><span class="box"></span><span>Nursing services delivered under the RN care plan.</span></div><div class="consent-line"><span class="box"></span><span>Companionship, supervision and respite support.</span></div><div class="consent-line"><span class="box"></span><span>Other agreed services: <span contenteditable="true" data-ph="Describe" style="min-width:220px"></span></span></div></div></div>
 </div><div class="card open">
   <div class="card-hd" onclick="this.parentNode.classList.toggle('open')">
     <span class="num">3</span><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
@@ -143,7 +143,7 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
     <div class="card-info"><div class="card-title">Confidentiality &amp; Privacy</div><div class="card-sub">How personal information is protected</div></div>
     <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
   </div>
-  <div class="card-bd"><div class="card-inner"><div class="body-text"><p>The Agency collects, uses and discloses personal health information only as needed to provide care and as permitted by Ontario’s <i>Personal Health Information Protection Act, 2004</i> (PHIPA). Information is kept confidential and shared with the care team, and with the client’s physician or funders, only as necessary. Consent to privacy practices is recorded separately in the Client Consent &amp; Privacy Authorization.</p></div></div></div>
+  <div class="card-bd"><div class="card-inner"><div class="body-text"><p>The Agency collects, uses and discloses personal health information only as needed to provide care and as permitted by Ontario’s <i>Personal Health Information Protection Act, 2004</i> (PHIPA). Information is kept confidential and shared with the care team, and with the client’s physician or funders, only as necessary. Consent to privacy practices is recorded separately in the Client Consent &amp; Privacy Authorization.</p><p>We use the Jane App platform for charting and documentation of the care we provide. Health information regarding your care is stored within its encrypted software, which is compliant with applicable health-privacy legislation (PHIPA).</p></div></div></div>
 </div><div class="card open">
   <div class="card-hd" onclick="this.parentNode.classList.toggle('open')">
     <span class="num">9</span><span class="ic"><svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><path d="M12 2v10"/></svg></span>
@@ -193,6 +193,7 @@ function downloadPDF(){
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
     pagebreak:{mode:['css','legacy']}}).from(el).save();
 }
+document.querySelectorAll('.box').forEach(function(b){b.addEventListener('click',function(){b.classList.toggle('checked');});});
 </script>
 
 </body></html>
