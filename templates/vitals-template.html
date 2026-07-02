@@ -503,7 +503,7 @@ var VITALS = [
   { key: 'spo2',     label: 'SpO₂',            unit: '%',     normal: [95, 100],    chartMin: 93,   chartMax: 101,  decimals: 0 },
   { key: 'rr',       label: 'Respiratory Rate',unit: 'br/min',normal: [12, 20],     chartMin: 8,    chartMax: 24,   decimals: 0 },
   { key: 'glucose',  label: 'Blood Glucose',   unit: 'mmol/L',normal: [3.9, 7.8],   chartMin: 3.0,  chartMax: 10.0, decimals: 1 },
-  { key: 'weight',   label: 'Weight',          unit: 'kg',    normal: null,         chartMin: 40,   chartMax: 100,  decimals: 1 }
+  { key: 'weight',   label: 'Weight',          unit: 'kg',    normal: null,         chartMin: 40,   chartMax: 100,  decimals: 1, daily: true }
 ];
 
 var rows = []; // each row: { datetime, temp, sys, dia, hr, spo2, rr, glucose }
@@ -717,8 +717,8 @@ function renderStatsTable() {
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td class="vital-name">' + v.label + '</td>' +
-      '<td>' + fmt(avg(me.morning), v.decimals) + '</td>' +
-      '<td>' + fmt(avg(me.evening), v.decimals) + '</td>' +
+      '<td>' + (v.daily ? '—' : fmt(avg(me.morning), v.decimals)) + '</td>' +
+      '<td>' + (v.daily ? '—' : fmt(avg(me.evening), v.decimals)) + '</td>' +
       '<td>' + fmt(avg(all), v.decimals) + '</td>' +
       '<td>' + fmt(min, v.decimals) + '</td>' +
       '<td>' + fmt(max, v.decimals) + '</td>' +
@@ -741,15 +741,21 @@ function renderCharts() {
     block.innerHTML =
       '<div class="chart-title">' + v.label + ' (' + v.unit + ')</div>' +
       '<div class="chart-pair" style="display:flex;flex-direction:column;gap:0.4rem;">' +
-        '<div class="chart-row"><canvas id="ch_' + v.key + '_m"></canvas><div class="chart-label">Morning<span class="median" id="md_' + v.key + '_m">—</span></div></div>' +
-        '<div class="chart-row"><canvas id="ch_' + v.key + '_e"></canvas><div class="chart-label">Evening<span class="median" id="md_' + v.key + '_e">—</span></div></div>' +
+        (v.daily
+          ? '<div class="chart-row"><canvas id="ch_' + v.key + '_a"></canvas><div class="chart-label">Daily<span class="median" id="md_' + v.key + '_a">—</span></div></div>'
+          : '<div class="chart-row"><canvas id="ch_' + v.key + '_m"></canvas><div class="chart-label">Morning<span class="median" id="md_' + v.key + '_m">—</span></div></div>' +
+            '<div class="chart-row"><canvas id="ch_' + v.key + '_e"></canvas><div class="chart-label">Evening<span class="median" id="md_' + v.key + '_e">—</span></div></div>') +
       '</div>';
     area.appendChild(block);
   });
   requestAnimationFrame(function() {
     VITALS.forEach(function(v) {
-      drawChart('ch_' + v.key + '_m', 'md_' + v.key + '_m', v, 'morning');
-      drawChart('ch_' + v.key + '_e', 'md_' + v.key + '_e', v, 'evening');
+      if (v.daily) {
+        drawChart('ch_' + v.key + '_a', 'md_' + v.key + '_a', v, 'all');
+      } else {
+        drawChart('ch_' + v.key + '_m', 'md_' + v.key + '_m', v, 'morning');
+        drawChart('ch_' + v.key + '_e', 'md_' + v.key + '_e', v, 'evening');
+      }
     });
   });
 }
