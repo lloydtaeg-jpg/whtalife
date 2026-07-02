@@ -680,21 +680,23 @@ function fmt(v, dec) {
 function renderSummary() {
   var grid = document.getElementById('summaryGrid');
   var cards = [];
+  function amPm(key, dec) { var me = getMorningEvening(rows, key); return 'AM ' + fmt(avg(me.morning), dec) + ' · PM ' + fmt(avg(me.evening), dec); }
 
   var temps = getAll(rows, 'temp');
-  cards.push({ label: 'Avg Temperature', value: fmt(avg(temps), 1), unit: '°C', sub: temps.length ? 'Range ' + fmt(Math.min.apply(null,temps),1) + ' – ' + fmt(Math.max.apply(null,temps),1) + ' °C' : '—' });
+  cards.push({ label: 'Avg Temperature', value: fmt(avg(temps), 1), unit: '°C', sub: temps.length ? amPm('temp',1) + ' °C' : '—' });
 
   var sys = getAll(rows, 'sys'), dia = getAll(rows, 'dia');
-  cards.push({ label: 'Avg Blood Pressure', value: fmt(avg(sys),0) + '/' + fmt(avg(dia),0), unit: 'mmHg', sub: '' });
+  var sysMe = getMorningEvening(rows,'sys'), diaMe = getMorningEvening(rows,'dia');
+  cards.push({ label: 'Avg Blood Pressure', value: fmt(avg(sys),0) + '/' + fmt(avg(dia),0), unit: 'mmHg', sub: sys.length ? 'AM ' + fmt(avg(sysMe.morning),0) + '/' + fmt(avg(diaMe.morning),0) + ' · PM ' + fmt(avg(sysMe.evening),0) + '/' + fmt(avg(diaMe.evening),0) : '—' });
 
   var hr = getAll(rows, 'hr');
-  cards.push({ label: 'Avg Heart Rate', value: fmt(avg(hr),0), unit: 'bpm', sub: hr.length ? 'Range ' + fmt(Math.min.apply(null,hr),0) + ' – ' + fmt(Math.max.apply(null,hr),0) + ' bpm' : '—' });
+  cards.push({ label: 'Avg Heart Rate', value: fmt(avg(hr),0), unit: 'bpm', sub: hr.length ? amPm('hr',0) + ' bpm' : '—' });
 
   var spo2 = getAll(rows, 'spo2');
-  cards.push({ label: 'Avg SpO₂', value: fmt(avg(spo2),1), unit: '%', sub: spo2.length ? 'Min recorded ' + fmt(Math.min.apply(null,spo2),0) + '%' : '—' });
+  cards.push({ label: 'Avg SpO₂', value: fmt(avg(spo2),1), unit: '%', sub: spo2.length ? amPm('spo2',0) + ' %' : '—' });
 
   var glu = getAll(rows, 'glucose');
-  cards.push({ label: 'Avg Glucose', value: fmt(avg(glu),1), unit: 'mmol/L', sub: glu.length ? 'Range ' + fmt(Math.min.apply(null,glu),1) + ' – ' + fmt(Math.max.apply(null,glu),1) : '—' });
+  cards.push({ label: 'Avg Glucose', value: fmt(avg(glu),1), unit: 'mmol/L', sub: glu.length ? amPm('glucose',1) : '—' });
 
   cards.push({ label: 'Total Readings', value: rows.length, unit: '', sub: rows.length + ' entries logged' });
 
