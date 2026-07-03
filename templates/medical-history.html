@@ -92,6 +92,8 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 .chknote{display:block;margin:.15rem 0 .6rem 1.7rem;min-height:1.7rem;width:calc(100% - 1.7rem);}
 .add-btn{margin-top:.5rem;background:transparent;border:1px dashed var(--aegean);color:var(--aegean-dark);border-radius:6px;padding:.35rem .7rem;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;}.add-btn:hover{background:rgba(111,151,151,.08);border-color:var(--aegean-dark);}@media print{.add-btn{display:none;}}
 .goal{position:relative;}.del-btn{background:transparent;border:none;color:var(--text-light);cursor:pointer;font-size:1rem;line-height:1;padding:.1rem .35rem;border-radius:4px;}.del-btn:hover{color:#b04a4a;background:rgba(176,74,74,.09);}.goal-del{position:absolute;top:.45rem;right:.45rem;}.qtable th.delcol{border:none;background:transparent;width:26px;padding:0;}.qtable td.delcell{border:none;text-align:center;width:26px;padding:.15rem;}@media print{.del-btn,.qtable td.delcell,.qtable th.delcol{display:none;}}
+
+.import-panel{background:var(--white);border:1px solid var(--border);border-left:3px solid var(--aegean);border-radius:0 8px 8px 0;padding:.9rem 1rem;margin-bottom:1rem;}.import-title{font-family:'Lora',serif;font-weight:600;color:var(--aegean-dark);font-size:.95rem;margin-bottom:.2rem;}.import-hint{font-size:.76rem;color:var(--text-mid);margin-bottom:.5rem;line-height:1.5;}.import-panel textarea{width:100%;min-height:110px;border:1px solid var(--border);border-radius:6px;padding:.5rem;font-family:'Inter',sans-serif;font-size:.8rem;color:var(--text);resize:vertical;box-sizing:border-box;}.import-panel .btns{margin-top:.5rem;display:flex;gap:.5rem;}@media print{.import-panel{display:none;}}
 </style></head>
 <body>
 <div class="doc">
@@ -103,6 +105,7 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
   <p>A record of the client’s medical background, medications, allergies and care details.</p>
 </div>
 <div class="cards">
+<div class="import-panel no-print"><div class="import-title">Auto-fill from a record</div><div class="import-hint">Paste the text of a medical history document below and click <b>Auto-fill</b>. Nothing leaves your browser &mdash; review and adjust the filled fields afterwards.</div><textarea id="importText" placeholder="Paste record text here…"></textarea><div class="btns"><button type="button" class="add-btn" onclick="importRecord()">Auto-fill</button><button type="button" class="add-btn" onclick="document.getElementById('importText').value='';">Clear</button></div></div>
 <div class="intro">A summary of the client’s medical history for care planning. Editable fields can be filled in on screen, checkboxes ticked, and rows added or removed as needed; click a section heading to collapse it. Use <b>Save as PDF</b> when complete.</div>
   <div class="card open">
   <div class="card-hd" onclick="this.parentNode.classList.toggle('open')">
@@ -249,5 +252,94 @@ function delBlock(btn){var g=btn.closest('.goal');var p=g.parentNode;if(p.queryS
 function addTableRow(btn){var tb=btn.parentNode.querySelector('table tbody');var rows=tb.querySelectorAll('tr');var clone=rows[rows.length-1].cloneNode(true);clone.querySelectorAll('td').forEach(function(td){if(td.classList.contains('delcell'))return;td.textContent='';td.classList.remove('rowlbl');td.setAttribute('contenteditable','true');});tb.appendChild(clone);}
 function delTableRow(btn){var tr=btn.closest('tr');var tb=tr.parentNode;if(tb.querySelectorAll('tr').length>1){tr.remove();}}
 function addRow(id){var c=document.getElementById(id);var items=c.querySelectorAll(':scope > .goal');var last=items[items.length-1];var clone=last.cloneNode(true);clone.querySelectorAll('[contenteditable]').forEach(function(el){el.innerHTML='';});clone.querySelectorAll('.box').forEach(function(b){b.classList.remove('checked');});c.appendChild(clone);}
+</script>
+<script>
+(function(){
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function findTableByLabel(label){
+  var t=null; document.querySelectorAll('.sec-lbl').forEach(function(el){ if(el.textContent.trim()===label) t=el; });
+  return t?t.closest('.sec').querySelector('table'):null;
+}
+function fillTable(label, data){
+  var table=findTableByLabel(label); if(!table||!data.length) return 0;
+  var ncols=table.querySelectorAll('thead th').length-1;
+  var tb=table.querySelector('tbody'); tb.innerHTML='';
+  data.forEach(function(vals){
+    var h=''; for(var c=0;c<ncols;c++){ h+='<td contenteditable="true" data-ph="">'+esc(vals[c]||'')+'</td>'; }
+    h+='<td class="delcell"><button type="button" class="del-btn" onclick="delTableRow(this)">&times;</button></td>';
+    var tr=document.createElement('tr'); tr.innerHTML=h; tb.appendChild(tr);
+  });
+  return data.length;
+}
+function between(T, startRe, endRes){
+  var m=T.match(startRe); if(!m) return '';
+  var s=m.index+m[0].length; var rest=T.slice(s); var e=rest.length;
+  endRes.forEach(function(re){ var mm=rest.match(re); if(mm && mm.index<e) e=mm.index; });
+  return rest.slice(0,e).trim();
+}
+function lines(block){ return block.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;}); }
+function firstDate(s){
+  var m=s.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/) || s.match(/[A-Z][a-z]{2,}\.?\s+\d{4}/) || s.match(/\b(?:19|20)\d{2}\b/) || s.match(/\d{1,2}\/\d{2}\b/);
+  return m?m[0]:'';
+}
+window.importRecord=function(){
+  var el=document.getElementById('importText'); var text=el?el.value:'';
+  if(!text.trim()){ alert('Paste the record text first.'); return; }
+  var T=text.replace(/\r/g,''); var filled=[];
+
+  var dg=between(T,/DIAGNOSES/i,[/Former smoker/i,/Allergies\s*:/i,/Care Providers/i]);
+  if(dg){
+    var items=dg.replace(/\n/g,' ').split(/,\s*/).map(function(x){return x.trim();}).filter(Boolean);
+    var rows=items.map(function(it){ return [it, firstDate(it), 'Active', '']; });
+    if(fillTable('Diagnoses / conditions', rows)) filled.push('Diagnoses ('+rows.length+')');
+  }
+
+  var al=between(T,/Allergies\s*:/i,[/Care Providers/i,/Surgical/i]);
+  if(al){
+    var one=al.replace(/\n/g,' ').trim();
+    var sev=(one.match(/ANAPHYLAXIS|severe|moderate|mild/i)||[''])[0];
+    var allergen=sev?one.replace(new RegExp(sev+'\\s*$','i'),'').trim():one;
+    if(fillTable('Allergies', [[allergen, sev||'', /anaphyl/i.test(sev)?'Severe':sev]])) filled.push('Allergies');
+  }
+
+  var cp=between(T,/Care Providers/i,[/Surgical/i]);
+  if(cp){
+    var rows=lines(cp).map(function(l){
+      var m=l.match(/^([^:]+):\s*(.+)$/); if(!m) return null;
+      var role=m[1].trim(); var rhs=m[2].trim(); var clinic=''; var name=rhs;
+      var cm=rhs.match(/\(([^)]*)\)\s*$/); if(cm){ clinic=cm[1].trim(); name=rhs.slice(0,cm.index).trim(); }
+      return [name, role, clinic];
+    }).filter(Boolean);
+    if(fillTable('Care team', rows)) filled.push('Care team ('+rows.length+')');
+  }
+
+  var sx=between(T,/Surgical HX/i,[/Current Medications/i]);
+  if(sx){
+    var rows=lines(sx).map(function(l){ var d=firstDate(l); var proc=d?l.replace(d,'').replace(/[-@,]+\s*$/,'').trim():l; return [proc, d, '']; });
+    if(fillTable('Procedures', rows)) filled.push('Surgical ('+rows.length+')');
+  }
+
+  var md=between(T,/Current Medications/i,[/Immunizations\s*:/i,/\bPRN\b/i]);
+  if(md){
+    var rows=lines(md).map(function(l){
+      var m=l.match(/^(.+?)\s+([\d.]+\s*(?:mg|mcg|IU|g|%|puff|tab|units)[^\s]*(?:\/[\d.]+\s*\w+)?)\s*(.*)$/i);
+      if(m) return [m[1].trim(), m[2].trim(), m[3].trim(), ''];
+      return [l, '', '', ''];
+    });
+    if(fillTable('Medications', rows)) filled.push('Medications ('+rows.length+')');
+  }
+
+  var im=between(T,/Immunizations\s*:/i,[/\bPRN\b/i,/TESTING RESULTS/i]);
+  if(im){
+    var one=im.replace(/\n/g,' ').trim(); var d=firstDate(one);
+    var name=d?one.replace(d,'').replace(/[-,\s]+$/,'').trim():one;
+    if(fillTable('Immunizations', [[name, d, '']])) filled.push('Immunizations');
+  }
+
+  document.querySelectorAll('.card').forEach(function(c){c.classList.add('open');});
+  alert(filled.length? 'Auto-filled: '+filled.join(', ')+'.\nPlease review and adjust each section.' : 'No recognizable sections found. Check the pasted text.');
+};
+})();
+
 </script>
 </body></html>
