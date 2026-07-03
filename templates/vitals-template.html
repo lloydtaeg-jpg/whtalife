@@ -457,6 +457,7 @@
         <th>Date &amp; Time</th>
         <th>Temp °C</th>
         <th>BP</th>
+        <th>MAP</th>
         <th>HR</th>
         <th>SpO₂ %</th>
         <th>RR</th>
@@ -499,6 +500,7 @@ var VITALS = [
   { key: 'temp',     label: 'Temperature',     unit: '°C',    normal: [36.6, 37.2], chartMin: 35.5, chartMax: 37.9, decimals: 1 },
   { key: 'sys',      label: 'Systolic BP',     unit: 'mmHg',  normal: [90, 130],    chartMin: 100,  chartMax: 155,  decimals: 0 },
   { key: 'dia',      label: 'Diastolic BP',    unit: 'mmHg',  normal: [60, 80],     chartMin: 55,   chartMax: 105,  decimals: 0 },
+  { key: 'map',      label: 'Mean Arterial Pressure', unit: 'mmHg', normal: [70, 100],  chartMin: 60,   chartMax: 110,  decimals: 0 },
   { key: 'hr',       label: 'Heart Rate',      unit: 'bpm',   normal: [60, 100],    chartMin: 45,   chartMax: 105,  decimals: 0 },
   { key: 'spo2',     label: 'SpO₂',            unit: '%',     normal: [95, 100],    chartMin: 93,   chartMax: 101,  decimals: 0 },
   { key: 'rr',       label: 'Respiratory Rate',unit: 'br/min',normal: [12, 20],     chartMin: 8,    chartMax: 24,   decimals: 0 },
@@ -514,7 +516,7 @@ var rows = []; // each row: { datetime, temp, sys, dia, hr, spo2, rr, glucose }
 function addRow(data) {
   var d = data || {
     datetime: '',
-    temp: '', sys: '', dia: '', hr: '', spo2: '', rr: '', glucose: '', weight: ''
+    temp: '', sys: '', dia: '', hr: '', spo2: '', rr: '', glucose: '', weight: '', map: ''
   };
   rows.push(d);
   renderTable();
@@ -600,6 +602,7 @@ function renderTable() {
       '<td><input type="datetime-local" value="' + esc(r.datetime) + '" oninput="updateRow(' + i + ',\'datetime\',this.value)"></td>' +
       '<td><input type="number" step="0.1" value="' + esc(r.temp) + '" oninput="updateRow(' + i + ',\'temp\',this.value)"></td>' +
       '<td><input type="text" value="' + esc(formatBP(r.sys, r.dia)) + '" oninput="parseBP(' + i + ',this.value)" placeholder="120/80"></td>' +
+      '<td class="map-cell" id="map_' + i + '">' + mapVal(r) + '</td>' +
       '<td><input type="number" value="' + esc(r.hr) + '" oninput="updateRow(' + i + ',\'hr\',this.value)"></td>' +
       '<td><input type="number" value="' + esc(r.spo2) + '" oninput="updateRow(' + i + ',\'spo2\',this.value)"></td>' +
       '<td><input type="number" value="' + esc(r.rr) + '" oninput="updateRow(' + i + ',\'rr\',this.value)"></td>' +
@@ -688,6 +691,9 @@ function renderSummary() {
   var sys = getAll(rows, 'sys'), dia = getAll(rows, 'dia');
   var sysMe = getMorningEvening(rows,'sys'), diaMe = getMorningEvening(rows,'dia');
   cards.push({ label: 'Avg Blood Pressure', value: fmt(avg(sys),0) + '/' + fmt(avg(dia),0), unit: 'mmHg', sub: sys.length ? 'AM ' + fmt(avg(sysMe.morning),0) + '/' + fmt(avg(diaMe.morning),0) + ' · PM ' + fmt(avg(sysMe.evening),0) + '/' + fmt(avg(diaMe.evening),0) : '—' });
+
+  var mapAll = getAll(rows, 'map');
+  cards.push({ label: 'Avg Mean Arterial Pressure', value: fmt(avg(mapAll),0), unit: 'mmHg', sub: mapAll.length ? amPm('map',0) + ' mmHg' : '—' });
 
   var hr = getAll(rows, 'hr');
   cards.push({ label: 'Avg Heart Rate', value: fmt(avg(hr),0), unit: 'bpm', sub: hr.length ? amPm('hr',0) + ' bpm' : '—' });
@@ -941,7 +947,10 @@ function clearAllData() {
 
 // MAIN RENDER
 // =====================================================
+function mapVal(r){ var sys=parseFloat(r.sys), dia=parseFloat(r.dia); return (!isNaN(sys)&&!isNaN(dia)) ? String(Math.round((sys+2*dia)/3)) : ''; }
+function recomputeMAP(){ rows.forEach(function(r,i){ r.map = mapVal(r); var c=document.getElementById('map_'+i); if(c) c.textContent=r.map; }); }
 function renderAll() {
+  recomputeMAP();
   renderSummary();
   renderStatsTable();
   renderCharts();
