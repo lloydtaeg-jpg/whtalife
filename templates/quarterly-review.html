@@ -62,7 +62,9 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 .note{font-size:.72rem;color:var(--text-light);font-style:italic;margin-top:1rem;text-align:center;padding:0 1rem;}
 .action-bar{position:fixed;bottom:1.25rem;right:1.25rem;display:flex;gap:.5rem;z-index:100;}
 .action-btn{background:var(--aegean-dark);color:#fff;border:none;height:38px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:.4rem;padding:0 .95rem;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:'Inter',sans-serif;font-size:.72rem;font-weight:500;}
+.action-btn.secondary{background:#7E9B9B;}
 .action-btn:hover{background:var(--aegean);}
+.action-btn.secondary:hover{background:#6f8c8c;}
 .action-btn svg{width:16px;height:16px;}
 @media print{
   body{background:#fff;}
@@ -91,6 +93,19 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 .qtable{width:100%;border-collapse:collapse;margin-top:.4rem;font-size:.8rem;}.qtable th{background:var(--spring);color:var(--aegean-dark);font-family:'Lora',serif;font-weight:600;text-align:left;padding:.4rem .55rem;border:1px solid var(--border);font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;}.qtable td{border:1px solid var(--border);padding:.4rem .55rem;color:var(--text-mid);vertical-align:top;}.qtable td.rowlbl{font-weight:600;color:var(--text);background:var(--cream);white-space:nowrap;}.qtable td[contenteditable]{display:table-cell;min-width:0;padding:.4rem .55rem;border:1px solid var(--border);border-radius:0;outline:none;}.qtable td[contenteditable]:empty:before{content:attr(data-ph);color:var(--text-light);font-style:italic;}.qtable td[contenteditable]:focus{background:rgba(111,151,151,.06);}
 .chknote{display:block;margin:.15rem 0 .6rem 1.7rem;min-height:1.7rem;width:calc(100% - 1.7rem);}
 .add-btn{margin-top:.5rem;background:transparent;border:1px dashed var(--aegean);color:var(--aegean-dark);border-radius:6px;padding:.35rem .7rem;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;}.add-btn:hover{background:rgba(111,151,151,.08);border-color:var(--aegean-dark);}@media print{.add-btn{display:none;}}
+.import-wrap{max-width:760px;margin:0 auto;padding:1rem 1rem 0;}
+.dropzone{display:flex;align-items:center;gap:.85rem;background:var(--white);border:2px dashed var(--border);border-radius:var(--radius);padding:.9rem 1rem;cursor:pointer;transition:border-color .2s,background .2s;}
+.dropzone:hover,.dropzone.drag{border-color:var(--aegean-dark);background:rgba(111,151,151,.07);}
+.dropzone .dz-ic{width:38px;height:38px;border-radius:8px;background:var(--spring);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dropzone .dz-ic svg{width:19px;height:19px;stroke:var(--aegean-dark);stroke-width:1.8;fill:none;}
+.dz-text{flex:1;min-width:0;}
+.dz-title{font-family:'Lora',serif;font-size:.9rem;font-weight:600;color:var(--text);}
+.dz-sub{font-size:.72rem;color:var(--text-light);margin-top:.1rem;line-height:1.45;}
+.dz-status{font-size:.75rem;margin-top:.45rem;color:var(--text-mid);display:none;}
+.dz-status.show{display:block;}
+.dz-status.ok{color:var(--success);}
+.dz-status.warn{color:#b04a4a;}
+@media print{.import-wrap{display:none!important;}}
 .goal{position:relative;}.del-btn{background:transparent;border:none;color:var(--text-light);cursor:pointer;font-size:1rem;line-height:1;padding:.1rem .35rem;border-radius:4px;}.del-btn:hover{color:#b04a4a;background:rgba(176,74,74,.09);}.goal-del{position:absolute;top:.45rem;right:.45rem;}.qtable th.delcol{border:none;background:transparent;width:26px;padding:0;}.qtable td.delcell{border:none;text-align:center;width:26px;padding:.15rem;}@media print{.del-btn,.qtable td.delcell,.qtable th.delcol{display:none;}}
 </style></head>
 <body>
@@ -101,6 +116,18 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
   <div class="tagline">Home &amp; Community Care</div>
   <h1>Quarterly Client Review</h1>
   <p>A quarterly review of care — progress, health updates, satisfaction, and goals for the next quarter.</p>
+</div>
+
+<div class="import-wrap">
+  <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload a previous quarterly client review">
+    <span class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="8 8 12 4 16 8"/><line x1="12" y1="4" x2="12" y2="16"/></svg></span>
+    <div class="dz-text">
+      <div class="dz-title">Start from a previous review</div>
+      <div class="dz-sub">Drop a saved review here — or click to browse. Accepts the PDF or data file (.json) saved from this form, or a saved copy of the page (.html).</div>
+      <div class="dz-status" id="dzStatus"></div>
+    </div>
+  </div>
+  <input id="importInput" type="file" accept=".pdf,.json,.html,.htm,application/pdf,application/json,text/html" hidden />
 </div>
 
 <div class="cards">
@@ -221,6 +248,10 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 </div>
 </div>
 <div class="action-bar">
+  <button class="action-btn secondary" type="button" onclick="downloadData()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Save Data
+  </button>
   <button class="action-btn" onclick="downloadPDF()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Save as PDF
@@ -228,18 +259,394 @@ ul.check li:before{content:'';top:.45rem;width:9px;height:9px;border-radius:2px;
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+var STATE_FORMAT='atria-quarterly-review';
+var STATE_VERSION=1;
+var STATE_MARKER='ATRIA-QR-DATA:';
+var PRISTINE_CARDS=null;
+
+/* ---------- small helpers ---------- */
+function cardsRoot(){return document.querySelector('.cards');}
+function toArray(list){return Array.prototype.slice.call(list);}
+function tablesIn(root){return toArray(root.querySelectorAll('table.qtable'));}
+function b64encodeUtf8(str){
+  var bytes=new TextEncoder().encode(str),bin='';
+  for(var i=0;i<bytes.length;i++){bin+=String.fromCharCode(bytes[i]);}
+  return btoa(bin);
+}
+function b64decodeUtf8(b64){
+  var bin=atob(b64),bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++){bytes[i]=bin.charCodeAt(i);}
+  return new TextDecoder().decode(bytes);
+}
+function normalizeText(text){
+  return String(text || '').replace(/[–—]/g,'-').replace(/\s+/g,' ').trim().toLowerCase().replace(/\s*:$/,'');
+}
+function setStatus(message,kind){
+  var el=document.getElementById('dzStatus');
+  if(!el){return;}
+  el.textContent=message||'';
+  el.className='dz-status'+(message?' show':'')+(kind?' '+kind:'');
+}
+
+/* ---------- reading and writing editable fields ---------- */
+function editableText(node){
+  var parts=[];
+  (function walk(n){
+    for(var i=0;i<n.childNodes.length;i++){
+      var child=n.childNodes[i];
+      if(child.nodeType===3){parts.push(child.nodeValue);continue;}
+      if(child.nodeType!==1){continue;}
+      var tag=child.tagName.toLowerCase();
+      if(tag==='br'){parts.push('\n');continue;}
+      var isBlock=/^(div|p|li|tr)$/.test(tag);
+      if(isBlock && parts.length && parts[parts.length-1]!=='\n'){parts.push('\n');}
+      walk(child);
+      if(isBlock){parts.push('\n');}
+    }
+  })(node);
+  return parts.join('').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+/* text nodes + <br> only — never innerHTML, so an uploaded file can't inject markup */
+function writeEditable(node,text){
+  node.innerHTML='';
+  var value=(text==null?'':String(text));
+  if(!value){return;}
+  value.split('\n').forEach(function(line,index){
+    if(index){node.appendChild(document.createElement('br'));}
+    node.appendChild(document.createTextNode(line));
+  });
+}
+
+/* ---------- capturing and restoring the whole form ---------- */
+function collectState(root){
+  var repeats={};
+  toArray(root.querySelectorAll('.repeat[id]')).forEach(function(container){
+    repeats[container.id]=container.querySelectorAll(':scope > .goal').length;
+  });
+  return {
+    format:STATE_FORMAT,
+    version:STATE_VERSION,
+    repeats:repeats,
+    tableRows:tablesIn(root).map(function(table){return table.querySelectorAll('tbody tr').length;}),
+    fields:toArray(root.querySelectorAll('[contenteditable]')).map(editableText),
+    boxes:toArray(root.querySelectorAll('.box')).map(function(box){return box.classList.contains('checked')?1:0;}),
+    openCards:toArray(root.querySelectorAll('.card')).map(function(card){return card.classList.contains('open')?1:0;})
+  };
+}
+function resetCards(){
+  var current=cardsRoot();
+  if(!current || !PRISTINE_CARDS){return;}
+  current.parentNode.replaceChild(PRISTINE_CARDS.cloneNode(true),current);
+  attachFieldLabels();
+}
+function addTableRowTo(table){
+  var body=table.querySelector('tbody');
+  var rows=body.querySelectorAll('tr');
+  var clone=rows[rows.length-1].cloneNode(true);
+  toArray(clone.querySelectorAll('td')).forEach(function(cell){
+    if(cell.classList.contains('delcell')){return;}
+    cell.textContent='';
+    cell.classList.remove('rowlbl');
+    cell.setAttribute('contenteditable','true');
+  });
+  body.appendChild(clone);
+}
+/* only trailing rows that were added by hand are removable — labelled template rows stay */
+function trimTableRows(table,want){
+  var body=table.querySelector('tbody');
+  var rows=body.querySelectorAll('tr');
+  while(rows.length>want && rows.length>1){
+    var last=rows[rows.length-1];
+    if(last.querySelector('.rowlbl')){break;}
+    last.remove();
+    rows=body.querySelectorAll('tr');
+  }
+}
+function applyStructure(state){
+  var root=cardsRoot();
+  Object.keys(state.repeats||{}).forEach(function(id){
+    var container=root.querySelector('#'+id);
+    if(!container){return;}
+    var want=Math.max(1,Math.min(200,parseInt(state.repeats[id],10)||1));
+    var blocks=container.querySelectorAll(':scope > .goal');
+    while(blocks.length<want){addRow(id);blocks=container.querySelectorAll(':scope > .goal');}
+    while(blocks.length>want && blocks.length>1){
+      blocks[blocks.length-1].remove();
+      blocks=container.querySelectorAll(':scope > .goal');
+    }
+  });
+  var rowCounts=Array.isArray(state.tableRows)?state.tableRows:[];
+  tablesIn(root).forEach(function(table,index){
+    if(rowCounts[index]==null){return;}
+    var want=Math.max(1,Math.min(400,parseInt(rowCounts[index],10)||1));
+    var have=table.querySelectorAll('tbody tr').length;
+    while(have<want){addTableRowTo(table);have++;}
+    if(have>want){trimTableRows(table,want);}
+  });
+}
+function applyState(state){
+  if(!state || state.format!==STATE_FORMAT){return {ok:false};}
+  resetCards();
+  applyStructure(state);
+  var root=cardsRoot();
+  var fields=toArray(root.querySelectorAll('[contenteditable]'));
+  var boxes=toArray(root.querySelectorAll('.box'));
+  var cards=toArray(root.querySelectorAll('.card'));
+  var savedFields=Array.isArray(state.fields)?state.fields:[];
+  var savedBoxes=Array.isArray(state.boxes)?state.boxes:[];
+  var mismatch=(savedFields.length!==fields.length)||(savedBoxes.length!==boxes.length);
+  fields.forEach(function(node,index){
+    if(index<savedFields.length){writeEditable(node,savedFields[index]);}
+  });
+  boxes.forEach(function(box,index){
+    box.classList.toggle('checked',!!savedBoxes[index]);
+  });
+  if(Array.isArray(state.openCards)){
+    cards.forEach(function(card,index){
+      if(state.openCards[index]!=null){card.classList.toggle('open',!!state.openCards[index]);}
+    });
+  }
+  var filled=savedFields.filter(function(value){return value && String(value).trim();}).length
+            +savedBoxes.filter(Boolean).length;
+  return {ok:true,mismatch:mismatch,filled:filled};
+}
+function formHasContent(){
+  var root=cardsRoot();
+  if(!root){return false;}
+  if(root.querySelector('.box.checked')){return true;}
+  return toArray(root.querySelectorAll('[contenteditable]')).some(function(node){
+    return editableText(node)!=='';
+  });
+}
+function clientNameSlug(){
+  var node=cardsRoot().querySelector('[data-field-label="client name"]');
+  var name=node?editableText(node):'';
+  return name?name.replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,''):'';
+}
+
+/* ---------- saving ---------- */
+function pdfPayload(){
+  return STATE_MARKER+b64encodeUtf8(JSON.stringify(collectState(cardsRoot())));
+}
+function baseFilename(){
+  var slug=clientNameSlug();
+  return 'Quarterly_Client_Review'+(slug?'_'+slug:'');
+}
 function downloadPDF(){
   document.querySelectorAll('.card').forEach(function(c){c.classList.add('open');});
+  var payload=pdfPayload();
+  var wrap=document.querySelector('.import-wrap');
+  if(wrap){wrap.style.display='none';}
   var el=document.querySelector('.doc');
-  html2pdf().set({margin:[8,8,8,8],filename:document.title.replace(/\s+/g,'_')+'.pdf',
+  html2pdf().set({margin:[8,8,8,8],filename:baseFilename()+'.pdf',
     image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-    pagebreak:{mode:['css','legacy']}}).from(el).save();
+    pagebreak:{mode:['css','legacy']}})
+    .from(el).toPdf()
+    .get('pdf',function(pdf){
+      /* the form's own answers ride along in the PDF metadata, so dropping this
+         file back on the page restores every field exactly */
+      try{pdf.setProperties({title:document.title,subject:'Atria Quarterly Client Review',keywords:payload});}catch(e){}
+    })
+    .save()
+    .then(function(){if(wrap){wrap.style.display='';}})
+    .catch(function(){if(wrap){wrap.style.display='';}});
 }
+function downloadData(){
+  var state=collectState(cardsRoot());
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var link=document.createElement('a');
+  link.href=url;
+  link.download=baseFilename()+'.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  setStatus('Data file saved. Drop it on this page next quarter to start from these answers.','ok');
+}
+
+/* ---------- best-effort text matching, for PDFs with no embedded data ---------- */
+function attachFieldLabels(){
+  document.querySelectorAll('.fieldrow').forEach(function(row){
+    var labels=row.querySelectorAll('label');
+    var cells=row.querySelectorAll('span[contenteditable]');
+    labels.forEach(function(label,index){
+      var target=cells[index];
+      if(target){target.dataset.fieldLabel=normalizeText(label.textContent);}
+    });
+  });
+  document.querySelectorAll('.rate').forEach(function(rate){
+    var label=rate.querySelector('.rate-lbl');
+    if(label){rate.dataset.fieldLabel=normalizeText(label.textContent);}
+  });
+}
+function setRateSelection(rateNode,text){
+  if(!rateNode||!text){return;}
+  var target=normalizeText(text);
+  rateNode.querySelectorAll('.opt').forEach(function(opt){
+    var optionText=normalizeText(opt.textContent);
+    var box=opt.querySelector('.box');
+    if(!box){return;}
+    if(target.indexOf(optionText)!==-1 || optionText.indexOf(target)!==-1){box.classList.add('checked');}
+  });
+}
+function extractValueFromLines(lines,labelKey){
+  var target=normalizeText(labelKey);
+  if(!target){return '';}
+  for(var i=0;i<lines.length;i++){
+    var line=normalizeText(lines[i]);
+    if(!line || line.indexOf(target)===-1){continue;}
+    var remainder=line.slice(line.indexOf(target)+target.length).replace(/^\s*[:\-]/,'').trim();
+    if(remainder){return remainder;}
+  }
+  return '';
+}
+function populateFromImportedText(text){
+  var lines=text.split(/\n+/).map(function(line){return String(line).replace(/\s+/g,' ').trim();}).filter(Boolean);
+  var matched=0;
+  document.querySelectorAll('[data-field-label]').forEach(function(node){
+    var value=extractValueFromLines(lines,node.dataset.fieldLabel);
+    if(!value){return;}
+    if(node.classList.contains('rate')){setRateSelection(node,value);matched++;}
+    else if(node.matches('[contenteditable]')){writeEditable(node,value);matched++;}
+  });
+  document.querySelectorAll('[contenteditable][data-ph]').forEach(function(node){
+    if(editableText(node)){return;}
+    var value=extractValueFromLines(lines,normalizeText(node.dataset.ph));
+    if(value){writeEditable(node,value);matched++;}
+  });
+  return matched;
+}
+
+/* ---------- import ---------- */
+function confirmOverwrite(){
+  if(!formHasContent()){return true;}
+  return window.confirm('This form already has entries. Replace them with the uploaded review?');
+}
+function reportApplied(result,label){
+  if(!result.ok){setStatus('That file did not contain review data this form recognises.','warn');return;}
+  if(result.mismatch){
+    setStatus('Loaded '+label+', but it came from a different version of this form — please check each section.','warn');
+  } else {
+    setStatus('Loaded '+label+' — '+result.filled+' fields and checkboxes restored. Review and update for this quarter.','ok');
+  }
+}
+function importJsonText(text,label){
+  var state;
+  try{state=JSON.parse(text);}catch(e){setStatus('That data file could not be read.','warn');return;}
+  if(!state || state.format!==STATE_FORMAT){setStatus('That JSON file is not a saved quarterly review.','warn');return;}
+  if(!confirmOverwrite()){setStatus('Import cancelled — nothing was changed.');return;}
+  reportApplied(applyState(state),label);
+}
+function importHtmlText(text,label){
+  var parsed=new DOMParser().parseFromString(text,'text/html');
+  var root=parsed.querySelector('.cards');
+  if(!root){setStatus('That page did not look like a saved quarterly review.','warn');return;}
+  if(!confirmOverwrite()){setStatus('Import cancelled — nothing was changed.');return;}
+  reportApplied(applyState(collectState(root)),label);
+}
+async function importPdf(file,label){
+  if(!window.pdfjsLib){setStatus('The PDF reader is still loading — please try again in a moment.','warn');return;}
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var buffer=await file.arrayBuffer();
+  var pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buffer)}).promise;
+
+  var keywords='';
+  try{
+    var meta=await pdf.getMetadata();
+    keywords=(meta && meta.info && meta.info.Keywords)||'';
+  }catch(e){}
+  if(keywords.indexOf(STATE_MARKER)!==-1){
+    var encoded=keywords.slice(keywords.indexOf(STATE_MARKER)+STATE_MARKER.length).trim();
+    var state=null;
+    try{state=JSON.parse(b64decodeUtf8(encoded));}catch(e){}
+    if(state){
+      if(!confirmOverwrite()){setStatus('Import cancelled — nothing was changed.');return;}
+      reportApplied(applyState(state),label);
+      return;
+    }
+  }
+
+  var extracted='';
+  for(var pageNum=1;pageNum<=pdf.numPages;pageNum++){
+    var page=await pdf.getPage(pageNum);
+    var content=await page.getTextContent();
+    extracted+=content.items.map(function(item){return String(item.str||'').trim();}).filter(Boolean).join('\n')+'\n';
+  }
+  if(extracted.trim().length<20){
+    setStatus('That PDF holds no readable text or saved data — it was likely produced before this upload feature, or scanned. Use the Save Data file, or a PDF saved from this page.','warn');
+    return;
+  }
+  if(!confirmOverwrite()){setStatus('Import cancelled — nothing was changed.');return;}
+  var matched=populateFromImportedText(extracted);
+  if(matched){
+    setStatus('No saved data was embedded in that PDF, so '+matched+' fields were matched from its text. Please check every section.','warn');
+  } else {
+    setStatus('That PDF was read but nothing matched this form. Use the Save Data file, or a PDF saved from this page.','warn');
+  }
+}
+async function importFile(file){
+  if(!file){return;}
+  var name=(file.name||'').toLowerCase();
+  setStatus('Reading '+file.name+'…');
+  try{
+    if(/\.json$/.test(name) || file.type==='application/json'){
+      importJsonText(await file.text(),file.name);
+    } else if(/\.html?$/.test(name) || file.type==='text/html'){
+      importHtmlText(await file.text(),file.name);
+    } else if(/\.pdf$/.test(name) || file.type==='application/pdf'){
+      await importPdf(file,file.name);
+    } else {
+      setStatus('Unsupported file. Please drop a .pdf, .json or .html review saved from this form.','warn');
+    }
+  }catch(err){
+    console.error(err);
+    setStatus('That file could not be read. Please try the data file (.json) saved from this form.','warn');
+  }
+}
+
+/* ---------- wiring ---------- */
+PRISTINE_CARDS=cardsRoot().cloneNode(true);
+attachFieldLabels();
+
+var dropzone=document.getElementById('dropzone');
+var importInput=document.getElementById('importInput');
+dropzone.addEventListener('click',function(){importInput.click();});
+dropzone.addEventListener('keydown',function(e){
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();importInput.click();}
+});
+importInput.addEventListener('change',function(event){
+  var file=event.target.files && event.target.files[0];
+  importFile(file);
+  event.target.value='';
+});
+['dragenter','dragover'].forEach(function(type){
+  document.addEventListener(type,function(e){
+    if(!e.dataTransfer || Array.prototype.indexOf.call(e.dataTransfer.types||[],'Files')===-1){return;}
+    e.preventDefault();
+    e.dataTransfer.dropEffect='copy';
+    dropzone.classList.add('drag');
+  });
+});
+['dragleave','dragend'].forEach(function(type){
+  document.addEventListener(type,function(e){
+    if(type==='dragleave' && e.relatedTarget){return;}
+    dropzone.classList.remove('drag');
+  });
+});
+document.addEventListener('drop',function(e){
+  if(!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length){return;}
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  importFile(e.dataTransfer.files[0]);
+});
+
 document.addEventListener('click',function(e){var b=e.target.closest('.box'); if(b){b.classList.toggle('checked');}});
 function delBlock(btn){var g=btn.closest('.goal');var p=g.parentNode;if(p.querySelectorAll(':scope > .goal').length>1){g.remove();}}
-function addTableRow(btn){var tb=btn.parentNode.querySelector('table tbody');var rows=tb.querySelectorAll('tr');var clone=rows[rows.length-1].cloneNode(true);clone.querySelectorAll('td').forEach(function(td){if(td.classList.contains('delcell'))return;td.textContent='';td.classList.remove('rowlbl');td.setAttribute('contenteditable','true');});tb.appendChild(clone);}
+function addTableRow(btn){addTableRowTo(btn.parentNode.querySelector('table'));}
 function delTableRow(btn){var tr=btn.closest('tr');var tb=tr.parentNode;if(tb.querySelectorAll('tr').length>1){tr.remove();}}
 function addRow(id){var c=document.getElementById(id);var items=c.querySelectorAll(':scope > .goal');var last=items[items.length-1];var clone=last.cloneNode(true);clone.querySelectorAll('[contenteditable]').forEach(function(el){el.innerHTML='';});clone.querySelectorAll('.box').forEach(function(b){b.classList.remove('checked');});c.appendChild(clone);}
 </script>
