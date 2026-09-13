@@ -751,7 +751,7 @@ function addResult() {
     return;
   }
 
-  results.push({ date: date, testKey: testKey, value: parseFloat(value), notes: notes });
+  results.push({ date: toISODate(date) || date, testKey: testKey, value: parseFloat(value), notes: notes });
   document.getElementById('entryValue').value = '';
   document.getElementById('entryNotes').value = '';
   renderAll();
@@ -776,7 +776,7 @@ function addSwab() {
     return;
   }
 
-  swabs.push({ date: date, site: site, result: result, organism: organism, notes: notes });
+  swabs.push({ date: toISODate(date) || date, site: site, result: result, organism: organism, notes: notes });
   document.getElementById('swabOrganism').value = '';
   document.getElementById('swabNotes').value = '';
   renderAll();
@@ -936,9 +936,66 @@ function fmt(v, dec) {
   if (v === null || v === undefined || isNaN(v)) return '—';
   return v.toFixed(dec);
 }
+/* Dates reach us in several shapes: the entry form gives YYYY-MM-DD, but an
+   imported CSV or PDF often carries "Aug 27, 2026" or "08/27/2026". Stored raw,
+   those sort alphabetically by month name — Apr, Aug, Dec … — which drops a new
+   August result near the front of every trend chart. Everything is normalised to
+   YYYY-MM-DD on the way in so the sorts below are genuinely chronological. */
+var MONTH_ABBR = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function isoParts(y, m, d) {
+  y = parseInt(y, 10); m = parseInt(m, 10); d = parseInt(d, 10);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return '';
+  if (y < 100) y += (y < 70 ? 2000 : 1900);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return '';
+  return y + '-' + pad2(m) + '-' + pad2(d);
+}
+function monthIndex(name) { return MONTH_ABBR.indexOf(name.slice(0,3).toLowerCase()); }
+function toISODate(raw) {
+  if (!raw) return '';
+  var s = String(raw).trim().replace(/^["']|["']$/g, '');
+  if (!s) return '';
+  var m;
+  // 2026-08-27 / 2026/8/27
+  if ((m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/))) return isoParts(m[1], m[2], m[3]);
+  // Aug 27, 2026 / August 27th 2026
+  if ((m = s.match(/^([A-Za-z]{3,})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{2,4})$/))) {
+    var mi = monthIndex(m[1]);
+    return mi < 0 ? '' : isoParts(m[3], mi + 1, m[2]);
+  }
+  // 27 Aug 2026
+  if ((m = s.match(/^(\d{1,2})(?:st|nd|rd|th)?\.?\s+([A-Za-z]{3,})\.?,?\s+(\d{2,4})$/))) {
+    var mj = monthIndex(m[2]);
+    return mj < 0 ? '' : isoParts(m[3], mj + 1, m[1]);
+  }
+  // 08/27/2026 — month first, unless the first number can only be a day
+  if ((m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/))) {
+    var a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+    return a > 12 ? isoParts(m[3], b, a) : isoParts(m[3], a, b);
+  }
+  return '';
+}
+/* A date we cannot read sorts to the end rather than jumping to the front */
+function dateKey(r) {
+  if (!r || !r.date) return '￿';
+  return toISODate(r.date) || '￿' + r.date;
+}
+function byDate(a, b) {
+  var ka = dateKey(a), kb = dateKey(b);
+  return ka < kb ? -1 : ka > kb ? 1 : 0;
+}
+/* Rewrites dates in place; returns true if anything was actually changed */
+function normalizeDates(list) {
+  var changed = false;
+  (list || []).forEach(function(r) {
+    var iso = toISODate(r.date);
+    if (iso && iso !== r.date) { r.date = iso; changed = true; }
+  });
+  return changed;
+}
 function formatDate(d) {
   if (!d) return '—';
-  var parts = d.split('-');
+  var parts = (toISODate(d) || d).split('-');
   if (parts.length !== 3) return d;
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return months[parseInt(parts[1],10)-1] + ' ' + parseInt(parts[2],10) + ', ' + parts[0];
@@ -976,7 +1033,7 @@ function renderPanels() {
         // Results table
         bodyHtml += '<table class="results-table" style="margin-top:0.75rem;">';
         bodyHtml += '<thead><tr><th>Date</th><th>Site</th><th>Result</th><th>Organism</th><th>Sensitivity / Notes</th><th></th></tr></thead><tbody>';
-        var sorted = swabs.slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
+        var sorted = swabs.slice().sort(byDate);
         sorted.forEach(function(s) {
           var idx = swabs.indexOf(s);
           var cls = s.result === 'Positive' ? 'high' : '';
@@ -1023,7 +1080,7 @@ function renderPanels() {
         var testResults = panelResults.filter(function(r) { return r.testKey === test.key; });
         if (testResults.length === 0) return;
 
-        testResults.sort(function(a,b) { return a.date.localeCompare(b.date); });
+        testResults.sort(byDate);
 
         var latest = testResults[testResults.length-1];
         var status = statusOf(latest.value, test.range);
@@ -1099,7 +1156,7 @@ function drawChart(test, color) {
   // Sort results by date
   var points = results
     .filter(function(r) { return r.testKey === test.key; })
-    .sort(function(a,b) { return a.date.localeCompare(b.date); });
+    .sort(byDate);
 
   if (points.length === 0) return;
 
@@ -1238,7 +1295,7 @@ function drawSwabTimeline() {
   ctx.strokeRect(padL + 0.5, padT + 0.5, plotW - 1, plotH - 1);
 
   // Sort by date
-  var sorted = swabs.slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
+  var sorted = swabs.slice().sort(byDate);
 
   // Draw timeline line
   var lineY = padT + plotH / 2;
@@ -1341,6 +1398,10 @@ function loadSaved() {
     var data = JSON.parse(raw);
     if (data.results) results = data.results;
     if (data.swabs) swabs = data.swabs;
+    /* repair dates saved by earlier versions, so existing entries fall back into order */
+    var repaired = normalizeDates(results);
+    if (normalizeDates(swabs)) repaired = true;
+    if (repaired) autoSave();
     if (data.meta) {
       var fields = document.querySelectorAll('.meta-row [contenteditable]');
       Object.keys(data.meta).forEach(function(k) {
@@ -1519,6 +1580,8 @@ function readCsvFile(file, handler) {
         if (data.type === 'whtalife-labs' || (data.results && Array.isArray(data.results))) {
           results = data.results || [];
           swabs = data.swabs || [];
+          normalizeDates(results);
+          normalizeDates(swabs);
           if (data.meta) {
             var fields = document.querySelectorAll('.meta-row [contenteditable]');
             Object.keys(data.meta).forEach(function(k) {
@@ -1564,6 +1627,8 @@ function importLabResults(text) {
   }
   var headers = csvRows[headerRowIdx].map(function(h) { return h.toLowerCase().trim(); });
   var dateIdx = headers.indexOf('date');
+  /* our own exports carry both "Date" (Aug 27, 2026) and "Date (ISO)" — prefer the ISO one */
+  var isoIdx = headers.indexOf('date (iso)');
   var testIdx = headers.indexOf('test');
   var valIdx = headers.indexOf('value');
   var notesIdx = headers.indexOf('notes');
@@ -1571,7 +1636,7 @@ function importLabResults(text) {
     alert('CSV must have columns: Date, Test, Value (and optionally Notes).');
     return;
   }
-  var count = 0;
+  var count = 0, unreadableDates = 0;
   for (var i = headerRowIdx + 1; i < csvRows.length; i++) {
     var r = csvRows[i];
     if (r.length < 3) continue;
@@ -1579,8 +1644,11 @@ function importLabResults(text) {
     if (!testKey) continue;
     var val = parseFloat(r[valIdx]);
     if (isNaN(val)) continue;
+    var rawDate = (isoIdx >= 0 ? r[isoIdx] : '') || r[dateIdx] || '';
+    var isoDate = toISODate(rawDate);
+    if (!isoDate && rawDate) unreadableDates++;
     results.push({
-      date: r[dateIdx] || '',
+      date: isoDate || rawDate,
       testKey: testKey,
       value: val,
       notes: notesIdx >= 0 ? (r[notesIdx] || '') : ''
@@ -1589,7 +1657,9 @@ function importLabResults(text) {
   }
   renderAll();
   autoSave();
-  alert(count + ' lab result' + (count !== 1 ? 's' : '') + ' imported.');
+  alert(count + ' lab result' + (count !== 1 ? 's' : '') + ' imported.' +
+    (unreadableDates ? '\n\n' + unreadableDates + ' row' + (unreadableDates !== 1 ? 's had dates' : ' had a date') +
+     ' in a format this form could not read — those sort to the end of each chart. Check the Date column.' : ''));
 }
 
 function importSwabs(text) {
@@ -1610,7 +1680,7 @@ function importSwabs(text) {
     var r = rows[i];
     if (r.length < 2) continue;
     swabs.push({
-      date: r[dateIdx] || '',
+      date: toISODate(r[dateIdx]) || r[dateIdx] || '',
       site: r[siteIdx] || '',
       result: resIdx >= 0 ? (r[resIdx] || 'Negative') : 'Negative',
       organism: orgIdx >= 0 ? (r[orgIdx] || '') : '',
